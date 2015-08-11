@@ -13,6 +13,7 @@ from lib.api import ApiClient
 from lib.api import ApiError
 from db import DB
 import os
+import sys
 import logging
 
 DEFAULT_COUNT = 60
@@ -21,26 +22,20 @@ __version__ = '1.0.0'
 
 logger = logging.getLogger(__name__)
 
-_print = print
 
-
-def set_print(func):
-    _print = func
-
-
-def _fetch_newer_statuses(api, db, uid):
+def _fetch_newer_statuses(api, db, uid, callback=None):
     '''增量更新，获取比某一条新的数据（新发布的）'''
     count = 0
     head_status = db.get_latest_status()
     if head_status:
-        while(True):
+        while(not callback or not callback.isCancelled()):
             head_status = db.get_latest_status()
             since_id = head_status['sid'] if head_status else None
             timeline = api.get_user_timeline(
                 uid, count=DEFAULT_COUNT, since_id=since_id)
             if not timeline:
                 break
-            _print("抓取到用户[{0}]的{1}条消息，准备保存...".format(uid, len(timeline)))
+            print("抓取到用户[{0}]的{1}条消息，正在保存...".format(uid, len(timeline)))
             db.bulk_insert_status(timeline)
             count += len(timeline)
             time.sleep(2)
@@ -49,17 +44,17 @@ def _fetch_newer_statuses(api, db, uid):
     return count
 
 
-def _fetch_older_statuses(api, db, uid):
+def _fetch_older_statuses(api, db, uid, callback=None):
     '''增量更新，获取比某一条旧的数据'''
     count = 0
-    while(True):
+    while(not callback or not callback.isCancelled()):
         tail_status = db.get_oldest_status()
         max_id = tail_status['sid'] if tail_status else None
         timeline = api.get_user_timeline(
             uid, count=DEFAULT_COUNT, max_id=max_id)
         if not timeline:
             break
-        _print("抓取到用户[{0}]的{1}条消息，准备保存...".format(uid, len(timeline)))
+        print("抓取到用户[{0}]的{1}条消息，正在保存...".format(uid, len(timeline)))
         db.bulk_insert_status(timeline)
         count += len(timeline)
         time.sleep(2)
@@ -78,15 +73,13 @@ def backup(username=None, password=None, **options):
     target - 目标用户ID
     '''
     auth_mode = username and password
-    output = options['output'] or 'output'
     target = options.get('target')
+    output = options.get('output') or 'output'
     verbose = options.get('verbose') != None
-    if not os.path.exists(output):
-        os.mkdir(output)
     api = ApiClient(verbose)
     token = utils.load_account_info(username)
     if token:
-        _print('载入用户[{1}]的本地登录信息 [{0}]'.format(
+        print('载入用户[{1}]的本地登录信息 [{0}]'.format(
             token['oauth_token'], username))
         api.set_oauth_token(token)
     user = None
@@ -97,38 +90,39 @@ def backup(username=None, password=None, **options):
         else:
             token = api.login(username, password)
             user = api.user
-            _print('保存用户[{1}]的登录信息 [{0}]'.format(
+            print('保存用户[{1}]的登录信息 [{0}]'.format(
                 token['oauth_token'], username))
             utils.save_account_info(username, token)
     if not target and not user:
-        _print('没有指定要备份的用户')
+        print('没有指定要备份的用户')
         return
     target_id = target or user['id']
     try:
         target_user = api.get_user(target_id)
     except ApiError, e:
         if e.args[0] == 404:
-            _print('你指定的用户[{0}]不存在'.format(target_id))
+            print('你指定的用户[{0}]不存在'.format(target_id))
         target_user = None
     if not target_user:
-        _print(
+        print(
             '无法获取用户[{0}]的信息'.format(target_id))
         return
-    _print('开始备份用户[{0}]的消息数据...'.format(target_id))
+    if not os.path.exists(output):
+        os.mkdir(output)
+    print('开始备份用户[{0}]的消息数据...'.format(target_id))
     db_file = os.path.abspath('{0}/{1}.db'.format(output, target_id))
-    _print('用户数据备份位置：{0}'.format(db_file))
+    print('用户数据备份位置：{0}'.format(db_file))
     db = DB(db_file)
     total = 0
     # first ,check new statuses
     total += _fetch_newer_statuses(api, db, target_id)
     # then, check older status
     total += _fetch_older_statuses(api, db, target_id)
-
     if total:
-        _print('用户[{1}]的全部{0}条消息已保存'.format(
+        print('用户[{1}]的全部{0}条消息已保存'.format(
             db.get_status_count(), target_id))
     else:
-        _print('用户[{0}]的全部消息已保存，没有新增消息'.format(target_id))
+        print('用户[{0}]的全部消息已保存，没有新增消息'.format(target_id))
 
 
 def parse_args():
@@ -152,4 +146,8 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
-    backup(**vars(parse_args()))
+    if len(sys.argv) < 2:
+        options = {'target': 'androidsupport'}
+        backup(**options)
+    else:
+        backup(**vars(parse_args()))

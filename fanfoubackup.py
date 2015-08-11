@@ -5,7 +5,12 @@
 '''
 Run fanfou statuses backup command line.
 '''
+import sys
 from backup.tools import backup
 from backup.tools import parse_args
 if __name__ == '__main__':
-    backup(**vars(parse_args()))
+    if len(sys.argv) < 2:
+        options = {'target': 'androidsupport'}
+        backup(**options)
+    else:
+        backup(**vars(parse_args()))
