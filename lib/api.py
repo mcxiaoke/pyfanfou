@@ -27,9 +27,9 @@ class ApiClient(object):
         self.token_url = config.TOKEN_URL
         self.api_host = config.API_HOST
         self.oauth_token = None
+        self.oauth=None
         self.user = None
         self.verbose = verbose
-        self._check_auth(oauth_token)
 
     def _get_url(self, path):
         return self.api_host+path+".json"
