@@ -2,6 +2,11 @@
 import oauth2
 import urllib
 import urlparse
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 
 class AuthError(Exception):
@@ -36,6 +41,7 @@ class AuthClient(object):
                 'x_auth_password': password,
             }))
         if resp['status'] != '200':
+            logger.error('failed  to get access_token, body=%s' % body)
             raise AuthError(resp['status'], 'invalid username or password')
         self.token = dict(urlparse.parse_qsl(body))
         return self.token

@@ -7,6 +7,11 @@ import requests
 from requests_oauthlib import OAuth1
 from xauth import AuthClient
 import config
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 
 class ApiError(Exception):
@@ -46,15 +51,15 @@ class ApiClient(object):
             return self.user
 
     def _send_request(self, method, path, **kwargs):
-        if self.verbose:
-            print "[request] %s %s %s" % (method, path, kwargs)
+        logger.info("[request] %s %s %s" % (method, path, kwargs))
         url = self._get_url(path)
         r = requests.request(method, url, auth=self.oauth, **kwargs)
-        if self.verbose:
-            print "[response]", r.url, r.status_code, r.encoding
+        logger.info("[response]", r.url, r.status_code, r.encoding)
         if r.status_code >= requests.codes.ok and r.status_code < 400:
             return r.json()
         else:
+            logger.error("[request] %s %s %d failed, statusCode=" %
+                         (method, path, r.status_code))
             raise ApiError(r.status_code, r.text)
 
     def login(self, username, password):
@@ -62,7 +67,7 @@ class ApiClient(object):
         client = AuthClient(
             self.consumer_key, self.consumer_secret, self.token_url)
         access_token = client.get_access_token(username, password)
-        print "login successful, token is", access_token['oauth_token']
+        logger.info("login successful, token is", access_token['oauth_token'])
         self._check_auth(access_token)
         # except AuthError, e:
         #     print "Error: login failed", e

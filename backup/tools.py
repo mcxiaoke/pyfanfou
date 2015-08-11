@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @Author: mcxiaoke
 # @Date:   2015-08-06 07:23:50
+from __future__ import print_function
 '''
 some scripts for fanfou.com
 '''
@@ -13,10 +14,13 @@ from lib.api import ApiError
 from db import DB
 import os
 import sys
+import logging
 
 DEFAULT_COUNT = 60
 
 __version__ = '1.0.0'
+
+logger = logging.getLogger(__name__)
 
 
 def _fetch_newer_statuses(api, db, uid):
@@ -26,7 +30,8 @@ def _fetch_newer_statuses(api, db, uid):
         while(True):
             head_status = db.get_latest_status()
             since_id = head_status['sid'] if head_status else None
-            print 'fetch statuses for {0}, since_id: {1}'.format(uid, since_id)
+            print(
+                'fetch statuses for {0}, since_id: {1}'.format(uid, since_id))
             timeline = api.get_user_timeline(
                 uid, count=DEFAULT_COUNT, since_id=since_id)
             if not timeline:
@@ -42,7 +47,8 @@ def _fetch_older_statuses(api, db, uid):
     while(True):
         tail_status = db.get_oldest_status()
         max_id = tail_status['sid'] if tail_status else None
-        print 'fetch statuses for {0}, max_id: {1}'.format(uid, max_id)
+        print(
+            'fetch statuses for {0}, max_id: {1}'.format(uid, max_id))
         timeline = api.get_user_timeline(
             uid, count=DEFAULT_COUNT, max_id=max_id)
         if not timeline:
@@ -55,7 +61,7 @@ def _fetch_older_statuses(api, db, uid):
 
 def backup(username=None, password=None, **options):
     auth_mode = username and password
-    output = options['output'] or 'out'
+    output = options['output'] or 'output'
     target = options.get('target')
     verbose = options.get('verbose') != None
     if not os.path.exists(output):
@@ -66,8 +72,8 @@ def backup(username=None, password=None, **options):
     api = ApiClient(verbose)
     token = utils.load_account_info(username)
     if token:
-        print 'load token for [{1}]: {0}'.format(
-            token['oauth_token'], username)
+        print('load token for [{1}]: {0}'.format(
+            token['oauth_token'], username))
         api.set_oauth_token(token)
     user = None
     if auth_mode:
@@ -77,34 +83,34 @@ def backup(username=None, password=None, **options):
         else:
             token = api.login(username, password)
             user = api.user
-            print 'save new token for [{1}]: {0}'.format(
-                token['oauth_token'], username)
+            print('save new token for [{1}]: {0}'.format(
+                token['oauth_token'], username))
             utils.save_account_info(username, token)
     if not target and not user:
-        print 'Error: no target id found, exit'
+        print('no target user id found, exit')
         return
     target_id = target or user['id']
-    print 'target user id is "%s" ' % target_id
+    print('target user id is "%s" ' % target_id)
     try:
         target_user = api.get_user(target_id)
-    except ApiError,e:
+    except ApiError, e:
         if e.args[0] == 404:
-            print 'Error: target user: "{0}" not exists'.format(target_id)
+            print('target user: "{0}" not exists'.format(target_id))
         target_user = None
     if not target_user:
-        print 'Error: unable to get user: "{0}", exit'.format(target_id)
+        print(
+            'unable to get user: "{0}", exit'.format(target_id))
         return
-    print 'Starting backup statuses for user: "{0}"'.format(target_id)
-
-    db_name = '{0}/{1}.db'.format(output, target_id)
-    print 'db name is %s' % db_name
-    db = DB(db_name)
+    print('Starting backup statuses for user: "{0}"'.format(target_id))
+    db_file = '{0}/{1}.db'.format(output, target_id)
+    print('backup db file is {0}'.format(db_file))
+    db = DB(db_file)
     # first ,check new statuses
     _fetch_newer_statuses(api, db, target_id)
     # then, check older status
     _fetch_older_statuses(api, db, target_id)
-    print 'all {0} statuses for {1} are stored in database'.format(
-        db.get_status_count(), target_id)
+    print('all {0} statuses for {1} are stored in database'.format(
+        db.get_status_count(), target_id))
     db.print_status()
 
 
