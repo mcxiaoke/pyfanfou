@@ -6,7 +6,6 @@
 import requests
 from requests_oauthlib import OAuth1
 from xauth import AuthClient
-from xauth import AuthError
 import config
 
 
@@ -27,7 +26,7 @@ class ApiClient(object):
         self.token_url = config.TOKEN_URL
         self.api_host = config.API_HOST
         self.oauth_token = None
-        self.oauth=None
+        self.oauth = None
         self.user = None
         self.verbose = verbose
 
@@ -59,15 +58,15 @@ class ApiClient(object):
             raise ApiError(r.status_code, r.text)
 
     def login(self, username, password):
-        try:
-            client = AuthClient(
-                self.consumer_key, self.consumer_secret, self.token_url)
-            access_token = client.get_access_token(username, password)
-            print "login successful, token is", access_token['oauth_token']
-            self._check_auth(access_token)
-        except AuthError, e:
-            print "Error: login failed", e
-            access_token = None
+        # try:
+        client = AuthClient(
+            self.consumer_key, self.consumer_secret, self.token_url)
+        access_token = client.get_access_token(username, password)
+        print "login successful, token is", access_token['oauth_token']
+        self._check_auth(access_token)
+        # except AuthError, e:
+        #     print "Error: login failed", e
+        #     access_token = None
         return access_token
 
     def set_oauth_token(self, oauth_token):

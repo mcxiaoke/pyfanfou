@@ -76,26 +76,25 @@ def backup(username=None, password=None, **options):
             user = api.user
         else:
             token = api.login(username, password)
-            if token:
-                user = api.user
-                print 'save new token for [{1}]: {0}'.format(
-                    token['oauth_token'], username)
-                utils.save_account_info(username, token)
-            else:
-                return
-    target_id = target if target else (user['id'] if user else None)
-    print 'target id is %s ' % target_id
-    if not target_id:
-        print 'Error: no target id, exit'
+            user = api.user
+            print 'save new token for [{1}]: {0}'.format(
+                token['oauth_token'], username)
+            utils.save_account_info(username, token)
+    if not target and not user:
+        print 'Error: no target id found, exit'
         return
+    target_id = target or user['id']
+    print 'target user id is "%s" ' % target_id
     try:
         target_user = api.get_user(target_id)
-    except ApiError:
+    except ApiError,e:
+        if e.args[0] == 404:
+            print 'Error: target user: "{0}" not exists'.format(target_id)
         target_user = None
     if not target_user:
-        print 'Error: unable to get user info: "{0}", exit'.format(target_id)
+        print 'Error: unable to get user: "{0}", exit'.format(target_id)
         return
-    print 'starting backup statuses for user: "{0}"'.format(target_id)
+    print 'Starting backup statuses for user: "{0}"'.format(target_id)
 
     db_name = '{0}/{1}.db'.format(output, target_id)
     print 'db name is %s' % db_name
