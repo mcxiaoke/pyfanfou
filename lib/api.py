@@ -51,15 +51,17 @@ class ApiClient(object):
             return self.user
 
     def _send_request(self, method, path, **kwargs):
-        logger.info("[request] %s %s %s" % (method, path, kwargs))
+        logger.info("[HTTP请求] %s %s %s" % (method, path, kwargs))
         url = self._get_url(path)
         r = requests.request(method, url, auth=self.oauth, **kwargs)
-        logger.info("[response]", r.url, r.status_code, r.encoding)
+        logger.info("[HTTP响应]", r.url, r.status_code, r.encoding)
         if r.status_code >= requests.codes.ok and r.status_code < 400:
             return r.json()
+        elif r.status_code == 403:
+            raise ApiError(r.status_code, "你没有权限查看该数据")
+        elif r.status_code == 404:
+            raise ApiError(r.status_code, "你请求的数据不存在")
         else:
-            logger.error("[request] %s %s %d failed, statusCode=" %
-                         (method, path, r.status_code))
             raise ApiError(r.status_code, r.text)
 
     def login(self, username, password):
@@ -67,7 +69,7 @@ class ApiClient(object):
         client = AuthClient(
             self.consumer_key, self.consumer_secret, self.token_url)
         access_token = client.get_access_token(username, password)
-        logger.info("login successful, token is", access_token['oauth_token'])
+        logger.info("登录成功，Token是", access_token['oauth_token'])
         self._check_auth(access_token)
         # except AuthError, e:
         #     print "Error: login failed", e

@@ -41,8 +41,8 @@ class AuthClient(object):
                 'x_auth_password': password,
             }))
         if resp['status'] != '200':
-            logger.error('failed  to get access_token, body=%s' % body)
-            raise AuthError(resp['status'], 'invalid username or password')
+            logger.error('登录失败，服务端返回数据：%s' % body)
+            raise AuthError(resp['status'], '用户名或密码不正确')
         self.token = dict(urlparse.parse_qsl(body))
         return self.token
 
