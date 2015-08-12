@@ -17,14 +17,6 @@ python fanfoubackup.py
 python backupui.py
 ```
 
-#### 截图一
-
-![ui1](images/backupui1.png)
-
-#### 截图二
-
-![ui2](images/backupui2.png)
-
 ### 命令行使用
 
 ```
@@ -39,3 +31,21 @@ fanfoubackup.py [-h] [-u USERNAME] [-p PASSWORD] [-t TARGET] [-s] [-i]
   -i , --include-photo 是否备份全部相册照片，默认否
   -o OUTPUT, --output OUTPUT 备份数据存放目录，默认是当前目录下的output目录
 ```
+
+## 截图
+
+#### Windows截图一
+
+![ui1](images/win1.png)
+
+#### Windows截图二
+
+![ui1](images/win2.png)
+
+#### Mac OS X截图一
+
+![ui1](images/backupui1.png)
+
+#### Mac OS X截图二
+
+![ui2](images/backupui2.png)
