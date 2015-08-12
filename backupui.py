@@ -52,11 +52,21 @@ class BackupUI(Frame):
 
     def __init__(self, parent=None, **options):
         Frame.__init__(self, parent)
+        self.createTop()
+        self.createIntro()
+        self.createBottom()
+        self.createText()
+        self.dataQueue = queue.Queue()
+        self.thread = None
+
+    def createTop(self):
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
         self.top.config(bd=2)
-        # self.tlb = Label(self.top, text='TOP').pack(expand=YES, fill=X)
+        self.createForm()
+        self.createButtons()
 
+    def createForm(self):
         self.login = Frame(self.top)
         self.login.config(padx=4, pady=4)
         self.login.pack(side=LEFT)
@@ -80,6 +90,7 @@ class BackupUI(Frame):
         self.login.columnconfigure(1, weight=1)
         self.login.columnconfigure(2, weight=1)
 
+    def createButtons(self):
         self.bgrp = Frame(self.top, padx=10, pady=10)
         self.bgrp.pack(side=RIGHT, expand=YES, fill=Y)
         self.btnStart = Button(self.bgrp, text='开始备份', command=self.start)
@@ -87,6 +98,7 @@ class BackupUI(Frame):
         self.btnStop = Button(self.bgrp, text='停止备份', command=self.stop)
         self.btnStop.pack(side=TOP)
 
+    def createIntro(self):
         self.intro = Label(
             self, text=textwrap.fill(const.AUTH_DESCRIPTION, 60))
         self.intro.config(padx=8, wraplength=0)
@@ -94,23 +106,23 @@ class BackupUI(Frame):
         self.intro.config(anchor=W, justify=LEFT)
         self.intro.pack(side=TOP, expand=YES, fill=X)
 
-        Separator(self).pack(side=TOP)
+    def createText(self):
+        self.content = Frame(self)
+        self.content.pack(side=TOP, expand=YES, fill=BOTH)
+        self.content.config(padx=10, pady=10)
+        self.text = ScrolledText(self.content)
+        self.text.pack(side=TOP, expand=YES, fill=BOTH)
+        self.text.config(bg='black', fg='white')
+        self.text.config(
+            padx=10, pady=10, font=('Helvetica', 12, 'normal'))
+        self.text.insert(END, const.USER_GUIDE)
+        self.text.config(state=DISABLED)
 
+    def createBottom(self):
         self.bottom = Frame(self)
         self.bottom.pack(side=BOTTOM, expand=YES, fill=X)
         self.bottom.config(bd=2)
         Label(self.bottom, text='BOTTOM').pack(expand=YES, fill=X)
-
-        self.text = ScrolledText(self)
-        self.text.pack(side=TOP, expand=YES, fill=BOTH)
-        self.text.config(bg='black', fg='white')
-        self.text.config(width=20, height=20)
-        self.text.config(
-            padx=10, pady=10, font=('Helvetica', 12, 'normal'))
-        self.text.insert(END, 'This is English Text. 中文显示有没有问题。')
-
-        self.dataQueue = queue.Queue()
-        self.thread = None
 
     def write(self, message):
         if message and message.strip():
@@ -119,7 +131,9 @@ class BackupUI(Frame):
             self.dataQueue.put(timestamp+" - "+message+'\n')
 
     def updateText(self, message):
+        self.text.config(state=NORMAL)
         self.text.insert(END, str(message))
+        self.text.config(state=DISABLED)
         self.text.see(END)
         self.text.update()
 
@@ -144,7 +158,9 @@ class BackupUI(Frame):
             return
         options = dict(zip(keys, values))
         print('start backup with options:', options)
+        self.text.config(state=NORMAL)
         self.text.delete('0.0', END)
+        self.text.config(state=DISABLED)
         self.updateUI()
         self.thread = BackupThread(self, self.dataQueue, **options)
         self.thread.start()
