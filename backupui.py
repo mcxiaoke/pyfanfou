@@ -5,13 +5,14 @@
 from __future__ import print_function
 import textwrap
 import sys
+import os
 import imp
 import threading
 from datetime import datetime
 import Queue as queue
 from Tkinter import *
 from ttk import Separator
-from tkFileDialog import *
+from tkFileDialog import askdirectory
 from tkSimpleDialog import *
 from tkMessageBox import showerror, showinfo
 from ScrolledText import ScrolledText
@@ -51,65 +52,57 @@ def redirectFunc(out, func, **kargs):
 class BackupUI(Frame):
 
     def __init__(self, parent=None, **options):
-        Frame.__init__(self, parent)
-        self.createTop()
-        self.createIntro()
-        self.createBottom()
-        self.createText()
+        Frame.__init__(self, parent, padx=10, pady=10)
+
         self.dataQueue = queue.Queue()
         self.thread = None
+        self.outputPath = os.path.abspath('.')
 
-    def createTop(self):
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
         self.top.config(bd=2)
         self.createForm()
         self.createButtons()
+        self.createText()
+
+    def createButtons(self):
+
+        frm = Frame(self.top)
+        frm.pack(side=RIGHT, expand=YES, anchor=NE)
+        self.btnStart = Button(frm, text='开始备份', command=self.start)
+        self.btnStart.pack(side=TOP)
+        self.btnStop = Button(frm, text='停止备份', command=self.stop)
+        self.btnStop.pack(side=TOP)
+
+        frm = Frame(self)
+        frm.pack(side=TOP, anchor=E)
+        self.btnSelect = Button(frm, text='保存路径', command=self.selectPath)
+        self.btnSelect.pack(side=RIGHT)
+        self.savePath = Entry(frm, width=40)
+        self.savePath.pack(side=RIGHT)
+        self.savePath.insert(END, self.outputPath)
 
     def createForm(self):
         self.login = Frame(self.top)
-        self.login.config(padx=4, pady=4)
-        self.login.pack(side=LEFT)
-        row_names = const.LOGIN_FIELDS
-        row_comments = const.LOGIN_COMMENTS
+        # self.login.config(padx=4, pady=4)
+        self.login.pack(side=LEFT, anchor=W)
+        fields = const.LOGIN_FIELDS
 
         self.inputs = []
-        for i in range(3):
-            lbl = Label(self.login, text=row_names[i])
-            lbl.config(padx=4, pady=4)
-            lbl.grid(row=i, column=0, sticky=NSEW)
+        for i in range(len(fields)):
+            lbl = Label(self.login, text=fields[i])
+            lbl.grid(row=i, column=0)
             var = StringVar()
             self.inputs.append(var)
-            ent = Entry(self.login, width=20, textvariable=var)
-            ent.grid(row=i, column=1, sticky=NSEW)
-            cmt = Label(self.login, text=row_comments[i])
-            cmt.config(padx=6, pady=4, fg='red')
-            cmt.grid(row=i, column=2, sticky=W)
+            ent = Entry(self.login, textvariable=var)
+            ent.grid(row=i, column=1)
             self.login.rowconfigure(i, weight=1)
         self.login.columnconfigure(0, weight=1)
         self.login.columnconfigure(1, weight=1)
-        self.login.columnconfigure(2, weight=1)
-
-    def createButtons(self):
-        self.bgrp = Frame(self.top, padx=10, pady=10)
-        self.bgrp.pack(side=RIGHT, expand=YES, fill=Y)
-        self.btnStart = Button(self.bgrp, text='开始备份', command=self.start)
-        self.btnStart.pack(side=TOP)
-        self.btnStop = Button(self.bgrp, text='停止备份', command=self.stop)
-        self.btnStop.pack(side=TOP)
-
-    def createIntro(self):
-        self.intro = Label(
-            self, text=textwrap.fill(const.AUTH_DESCRIPTION, 60))
-        self.intro.config(padx=8, wraplength=0)
-        self.intro.config(fg='dark blue')
-        self.intro.config(anchor=W, justify=LEFT)
-        self.intro.pack(side=TOP, expand=YES, fill=X)
 
     def createText(self):
         self.content = Frame(self)
-        self.content.pack(side=TOP, expand=YES, fill=BOTH)
-        self.content.config(padx=10, pady=10)
+        self.content.pack(side=LEFT, expand=YES, fill=BOTH)
         self.text = ScrolledText(self.content)
         self.text.pack(side=TOP, expand=YES, fill=BOTH)
         self.text.config(bg='black', fg='white')
@@ -118,11 +111,11 @@ class BackupUI(Frame):
         self.text.insert(END, const.USER_GUIDE)
         self.text.config(state=DISABLED)
 
-    def createBottom(self):
-        self.bottom = Frame(self)
-        self.bottom.pack(side=BOTTOM, expand=YES, fill=X)
-        self.bottom.config(bd=2)
-        Label(self.bottom, text='BOTTOM').pack(expand=YES, fill=X)
+    def selectPath(self):
+        self.outputPath = askdirectory(initialdir='.')
+        if self.outputPath:
+            self.savePath.delete(0, END)
+            self.savePath.insert(END, self.outputPath)
 
     def write(self, message):
         if message and message.strip():
@@ -157,6 +150,7 @@ class BackupUI(Frame):
             showerror(const.NO_INPUT_TITLE, const.NO_INPUT_MESSAGE)
             return
         options = dict(zip(keys, values))
+        options['output'] = self.outputPath
         print('start backup with options:', options)
         self.text.config(state=NORMAL)
         self.text.delete('0.0', END)
@@ -191,15 +185,33 @@ class BackupThread(threading.Thread):
         redirectFunc(self, self.backup.start)
 
 
+def center(root):
+    # https://bbs.archlinux.org/viewtopic.php?id=149559
+    # Apparently a common hack to get the window size. Temporarily hide the
+    # window to avoid update_idletasks() drawing the window in the wrong
+    # position.
+    root.withdraw()
+    root.update_idletasks()  # Update "requested size" from geometry manager
+
+    x = (root.winfo_screenwidth() - root.winfo_reqwidth()) / 2
+    y = (root.winfo_screenheight() - root.winfo_reqheight()) / 2
+    root.geometry("+%d+%d" % (x, y-50))
+
+    # This seems to draw the window frame immediately, so only call deiconify()
+    # after setting correct window position
+    root.deiconify()
+
+
 def start():
     root = Tk()
     root.title('{0} v{1}'.format(const.APP_NAME, __version__))
     root.iconname(const.APP_NAME)
-    # root.minsize(320, 240)
+    root.resizable(FALSE, FALSE)
     ui = BackupUI(root)
     ui.pack()
     root.protocol('WM_DELETE_WINDOW', lambda: print(
         '程序关闭') or ui.stop() or root.quit())
+    center(root)
     root.mainloop()
 
 if __name__ == '__main__':
