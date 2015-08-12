@@ -20,8 +20,8 @@ from fanfou import const
 from fanfou import backup
 
 __version__ = const.APP_VERSION
-
 _stdout = sys.stdout
+isWin32 = (sys.platform[:3] == 'win')
 
 
 class GuiOutput:
@@ -86,13 +86,13 @@ class BackupUI(Frame):
         self.photoCheck.config(command=self.callback)
         self.photoCheck.pack(side=TOP)
 
-        frm = Frame(self)
+        frm = Frame(self, pady=5, padx=5)
         frm.pack(side=TOP, anchor=W)
         self.btnSelect = Button(frm, text='选择保存路径', command=self.selectPath)
         self.btnSelect.pack(side=LEFT)
         self.savePath = Entry(frm, width=45, textvariable=self.outputPath)
         self.savePath.pack(side=LEFT)
-        self.savePath.insert(END, os.path.expanduser('~/Documents/fanfou/'))
+        self.savePath.insert(END, os.path.abspath(os.path.join('.', 'output')))
 
     def createForm(self):
         self.login = Frame(self.top)
@@ -113,13 +113,15 @@ class BackupUI(Frame):
         self.login.columnconfigure(1, weight=1)
 
     def createText(self):
-        self.content = Frame(self)
+        winfont = ('simhei', 10, 'normal')
+        font = ('Helvetica', 12, 'normal')
+
+        self.content = Frame(self, pady=5)
         self.content.pack(side=LEFT, expand=YES, fill=BOTH)
         self.text = ScrolledText(self.content)
         self.text.pack(side=TOP, expand=YES, fill=BOTH)
         self.text.config(bg='light gray', fg='black')
-        self.text.config(
-            padx=10, pady=10, font=('Helvetica', 12, 'normal'))
+        self.text.config(padx=10, pady=10, font=winfont if isWin32 else font)
         self.text.insert(END, const.USER_GUIDE)
         self.text.config(state=DISABLED)
 
@@ -130,7 +132,8 @@ class BackupUI(Frame):
             self.savePath.insert(END, path)
 
     def callback(self):
-        print('callback', self.userVar.get(), self.photoVar.get())
+        #print('callback', self.userVar.get(), self.photoVar.get())
+        pass
 
     def write(self, message):
         if message and message.strip():
@@ -168,9 +171,9 @@ class BackupUI(Frame):
             showerror(const.NO_INPUT_TITLE, const.NO_INPUT_MESSAGE)
             return
         options = dict(zip(keys, values))
-        options['output'] = self.outputPath.get()
-        options['user_flag'] = self.userVar.get()
-        options['photo_flag'] = self.photoVar.get()
+        options['output'] = self.savePath.get()
+        options['include-user'] = self.userVar.get()
+        options['include-photo'] = self.photoVar.get()
         print('启动参数：', options)
         self.text.config(state=NORMAL)
         self.text.delete('0.0', END)

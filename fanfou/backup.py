@@ -3,9 +3,7 @@
 # @Author: mcxiaoke
 # @Date:   2015-08-06 07:23:50
 from __future__ import print_function
-'''
-饭否数据处理脚本
-'''
+import sys
 import argparse
 import utils
 import time
@@ -15,10 +13,15 @@ from db import DB
 import os
 import logging
 
+'''
+饭否数据处理脚本
+'''
+
 DEFAULT_COUNT = 60
 DEFAULT_USER_COUNT = 100
 
 __version__ = '1.0.0'
+__stdout__ = sys.stdout
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +57,12 @@ class Backup(object):
         self.auth_mode = self.username and self.password
         self.target = options.get('target')
         self.output = options.get('output') or 'output'
-        self.user_flag = options.get('user_flag') or 0
-        self.photo_flag = options.get('photo_flag') or 0
+        self.include_user = options.get('include-user') or 0
+        self.include_photo = options.get('include-photo') or 0
 
     def _precheck(self):
         if self.token:
-            print('载入用户 [{1}] 的本地登录信息 [{0}]'.format(
+            print('载入{1}的本地登录信息{0}'.format(
                 self.token['oauth_token'], self.username))
             self.api.set_oauth_token(self.token)
         if self.auth_mode:
@@ -69,7 +72,7 @@ class Backup(object):
             else:
                 self.token = self.api.login(self.username, self.password)
                 self.user = self.api.user
-                print('保存用户 [{1}] 的登录信息 [{0}]'.format(
+                print('保存{1}的登录信息{0}'.format(
                     self.token['oauth_token'], self.username))
                 utils.save_account_info(self.username, self.token)
         if not self.target and not self.user:
@@ -86,38 +89,40 @@ class Backup(object):
         if not self.target_id:
             return
         try:
-            target_user = self.api.get_user(self.target_id)
+            self.target_user = self.api.get_user(self.target_id)
         except ApiError, e:
             if e.args[0] == 404:
-                print('你指定的用户 [{0}] 不存在'.format(self.target_id))
-            target_user = None
-        if not target_user:
+                print('你指定的用户{0}不存在'.format(self.target_id))
+            self.target_user = None
+        if not self.target_user:
             print(
-                '无法获取用户 [{0}] 的信息'.format(self.target_id))
+                '无法获取用户{0}的信息'.format(self.target_id))
             return
-        print('用户 [{0}] 共有 [{1}] 条消息'.format(
-            target_user['id'], target_user['statuses_count']))
+        print('用户{0}共有{1}条消息，{2}个好友'.format(
+            self.target_user['id'],
+            self.target_user['statuses_count'],
+            self.target_user['friends_count']))
         if not os.path.exists(self.output):
             os.mkdir(self.output)
-        print('开始备份用户 [{0}] 的消息...'.format(self.target_id))
+        print('开始备份用户{0}的消息...'.format(self.target_id))
         db_file = os.path.abspath(
             '{0}/{1}.db'.format(self.output, self.target_id))
-        print('数据路径：{0}'.format(db_file))
+        print('保存路径：{0}'.format(self.output))
         self.db = DB(db_file)
         db_count = self.db.get_status_count()
         if db_count:
-            print('发现数据库已备份消息 {0} 条'.format(db_count))
+            print('发现数据库已备份消息{0}条'.format(db_count))
         # first ,check new statuses
         self._fetch_newer_statuses()
         # then, check older status
         self._fetch_older_statuses()
-        if self.photo_flag:
+        if self.include_photo:
             # check user photos
-            print('开始备份用户 [{0}] 的相册照片...'.format(self.target_id))
+            print('开始备份用户{0}的相册照片...'.format(self.target_id))
             self._fetch_photos()
-        if self.user_flag:
+        if self.include_user:
             # check user followings
-            print('开始备份用户 [{0}] 的好友资料...'.format(self.target_id))
+            print('开始备份用户{0}的好友资料...'.format(self.target_id))
             self._fetch_followings()
         self._report()
         if self.cancelled:
@@ -127,11 +132,11 @@ class Backup(object):
         self.db.close()
 
     def _report(self):
-        print('本次共备份了 [{1}] 的 {0} 条消息'.format(
+        print('本次共备份了{1}的{0}条消息'.format(
             self.total, self.target_id))
-        print('本次共备份了 [{1}] 的 {0} 张照片'.format(
+        print('本次共备份了{1}的{0}张照片'.format(
             self.photo_total, self.target_id))
-        print('本次共备份了 [{1}] 的 {0} 个好友'.format(
+        print('本次共备份了{1}的{0}个好友'.format(
             self.user_total, self.target_id))
 
     def _fetch_followings(self):
@@ -142,7 +147,7 @@ class Backup(object):
             if not users:
                 break
             count = len(users)
-            print("正在保存用户资料 {0}~{1}...".format(
+            print("正在保存第{0}-{1}条用户资料 ...".format(
                 self.user_total, self.user_total+count))
             self.db.bulk_insert_user(users)
             self.user_total += count
@@ -156,38 +161,33 @@ class Backup(object):
         status_id = status['id']
         if photo:
             url = photo['largeurl']
-            img_dir = os.path.join(self.output, 'photos')
+            img_dir = os.path.join(
+                self.output, '{0}-photos'.format(self.target_id))
             if not os.path.exists(img_dir):
                 os.makedirs(img_dir)
             img_name = '{0}.{1}'.format(status_id, url[-3:] or 'jpg')
             filename = os.path.join(img_dir, img_name)
             if os.path.exists(filename):
-                # print('图片已存在，跳过 {0}'.format(url))
-                pass
+                print('跳过已存在的照片 {0}'.format(img_name))
             else:
-                # print('开始下载图片 {0}'.format(url))
+                print('正在备份照片 {0}'.format(img_name))
                 utils.download_and_save(url, filename)
-                # print('图片已保存到 {0}'.format(filename))
-        else:
-            # print('消息 {0} 中未找到照片'.format(status_id))
-            pass
 
     def _fetch_photos(self):
         tail_status = None
         while(not self.cancelled):
-            max_id = tail_status['sid'] if tail_status else None
+            max_id = tail_status['id'] if tail_status else None
             timeline = self.api.get_user_photos(
                 self.target_id, count=DEFAULT_COUNT, max_id=max_id)
             if not timeline:
                 break
-            tail_status = timeline[-1:]
+            tail_status = timeline[-1]
             count = len(timeline)
-            print("正在下载照片 {0}~{1}...".format(
+            print("正在下载第{0}-{1}张照片 ...".format(
                 self.photo_total, self.photo_total+count))
             for status in timeline:
                 self._download_photo(status)
             self.photo_total += count
-            time.sleep(1)
             if len(timeline) < DEFAULT_COUNT:
                 break
 
@@ -203,7 +203,9 @@ class Backup(object):
                 if not timeline:
                     break
                 count = len(timeline)
-                print("正在保存消息 {0}~{1}...".format(self.total, self.total+count))
+                print("正在保存第{0}-{1}条消息，共{2}条 ...".format(
+                    self.total, self.total+count,
+                    self.target_user['statuses_count']))
                 self.db.bulk_insert_status(timeline)
                 self.total += count
                 time.sleep(1)
@@ -220,7 +222,9 @@ class Backup(object):
             if not timeline:
                 break
             count = len(timeline)
-            print("正在保存消息 {0}~{1}...".format(self.total, self.total+count))
+            print("正在保存第{0}-{1}条消息，共{2}条 ...".format(
+                self.total, self.total+count,
+                self.target_user['statuses_count']))
             self.db.bulk_insert_status(timeline)
             self.total += count
             time.sleep(1)
@@ -243,9 +247,9 @@ def parse_args():
                         help='你的饭否密码')
     parser.add_argument('-t', '--target',
                         help='要备份的用户ID，默认是登录帐号')
-    parser.add_argument('-l', '--user_flag',
+    parser.add_argument('-s', '--include-user', action='store_const', const=0,
                         help='是否备份好友资料列表')
-    parser.add_argument('-i', '--photo_flag',
+    parser.add_argument('-i', '--include-photo', action='store_const', const=0,
                         help='是否备份全部相册照片')
     parser.add_argument('-o', '--output',
                         help='备份数据存放目录，默认是当前目录下的output目录')
@@ -253,4 +257,6 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        sys.argv.append('-h')
     Backup(**vars(parse_args())).start()

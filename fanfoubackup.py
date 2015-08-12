@@ -10,7 +10,10 @@ import backupcmd
 import backupui
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(sys.argv) == 2 and sys.argv[1] == '-gui':
         backupui.start()
+    elif len(sys.argv) == 1:
+        sys.argv.append('-h')
+        backupcmd.start()
     else:
         backupcmd.start()
