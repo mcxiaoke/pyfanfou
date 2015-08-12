@@ -7,11 +7,16 @@ a = Analysis(['backupui.py'],
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
+          exclude_binaries=True,
           name='pyfanfou.exe',
           debug=False,
-          strip=False,
+          strip=None,
           upx=False,
-          console=False )
+          console=False , icon='icon.ico')
+coll = COLLECT(exe,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=None,
+               upx=False,
+               name=u'pyfanfou')

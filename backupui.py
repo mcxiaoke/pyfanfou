@@ -19,6 +19,8 @@ from ScrolledText import ScrolledText
 from fanfou import const
 from fanfou import backup
 
+# http://pythonhosted.org/PyInstaller/
+
 __version__ = const.APP_VERSION
 _stdout = sys.stdout
 isWin32 = (sys.platform[:3] == 'win')
