@@ -243,6 +243,10 @@ def parse_args():
                         help='你的饭否密码')
     parser.add_argument('-t', '--target',
                         help='要备份的用户ID，默认是登录帐号')
+    parser.add_argument('-l', '--user_flag',
+                        help='是否备份好友资料列表')
+    parser.add_argument('-i', '--photo_flag',
+                        help='是否备份全部相册照片')
     parser.add_argument('-o', '--output',
                         help='备份数据存放目录，默认是当前目录下的output目录')
     args = parser.parse_args()
