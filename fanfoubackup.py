@@ -3,14 +3,14 @@
 # @Author: mcxiaoke
 # @Date:   2015-08-07 23:13:33
 '''
-Run fanfou statuses backup command line.
+Run fanfou statuses backup.
 '''
 import sys
-from backup.tools import Backup
-from backup.tools import parse_args
+import backupcmd
+import backupui
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        options = {'target': 'androidsupport'}
-        Backup(**options).start()
+        backupui.start()
     else:
-        Backup(**vars(parse_args())).start()
+        backupcmd.start()

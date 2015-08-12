@@ -15,8 +15,8 @@ from tkFileDialog import *
 from tkSimpleDialog import *
 from tkMessageBox import showerror, showinfo
 from ScrolledText import ScrolledText
-import const
-from backup import tools
+from lib import const
+from lib import backup
 from imp import reload
 
 __version__ = const.APP_VERSION
@@ -151,20 +151,16 @@ class BackupUI(Frame):
             self.updateUI()
 
 
-def _exit():
-    try:
-        root.quit()
-        ui.stop()
-    except Exception, e:
-        sys.exit
-
-if __name__ == '__main__':
-
+def start():
     root = Tk()
     root.title('{0} v{1}'.format(const.APP_NAME, __version__))
     root.iconname(const.APP_NAME)
     # root.minsize(320, 240)
     ui = BackupUI(root)
     ui.pack()
-    root.protocol('WM_DELETE_WINDOW', _exit)
+    root.protocol('WM_DELETE_WINDOW', lambda: print(
+        '程序关闭') or ui.stop() or root.quit())
     root.mainloop()
+
+if __name__ == '__main__':
+    start()
