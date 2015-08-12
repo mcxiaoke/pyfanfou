@@ -186,6 +186,8 @@ class Backup(object):
             print("正在下载第{0}-{1}张照片 ...".format(
                 self.photo_total, self.photo_total+count))
             for status in timeline:
+                if self.cancelled:
+                    break
                 self._download_photo(status)
             self.photo_total += count
             if len(timeline) < DEFAULT_COUNT:
