@@ -130,7 +130,7 @@ class DB(BaseDB):
         c.executemany(("INSERT OR REPLACE INTO user "
                        " (id,screen_name,created_at,added_at,data) "
                        " VALUES (?,?,?,?,?) "), values)
-        print "%d条用户资料已存储到数据库" % c.rowcount
+        print "%d 条用户资料已存储到数据库" % c.rowcount
         self.conn.commit()
         return c
 
@@ -151,7 +151,7 @@ class DB(BaseDB):
                        " (id,sid,uid,created_at,added_at,data) "
                        " VALUES (?,?,?,?,?,?) "), values)
         self.conn.commit()
-        print "%d条消息已存储到数据库" % c.rowcount
+        print "%d 条消息已存储到数据库" % c.rowcount
         return c
 
     def print_status(self):

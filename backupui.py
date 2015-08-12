@@ -55,7 +55,7 @@ class BackupUI(Frame):
 
         self.dataQueue = queue.Queue()
         self.thread = None
-        self.outputPath = os.path.expanduser('~/Documents/fanfou/')
+        self.outputPath = StringVar()
 
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
@@ -72,14 +72,15 @@ class BackupUI(Frame):
         self.btnStart.pack(side=TOP)
         self.btnStop = Button(frm, text='停止备份', command=self.stop)
         self.btnStop.pack(side=TOP)
+        self.btnStop.config(state=DISABLED)
 
         frm = Frame(self)
-        frm.pack(side=TOP, anchor=E)
-        self.btnSelect = Button(frm, text='保存路径', command=self.selectPath)
-        self.btnSelect.pack(side=RIGHT)
-        self.savePath = Entry(frm, width=40)
-        self.savePath.pack(side=RIGHT)
-        self.savePath.insert(END, self.outputPath)
+        frm.pack(side=TOP, anchor=W)
+        self.btnSelect = Button(frm, text='选择保存路径', command=self.selectPath)
+        self.btnSelect.pack(side=LEFT)
+        self.savePath = Entry(frm, width=45, textvariable=self.outputPath)
+        self.savePath.pack(side=LEFT)
+        self.savePath.insert(END, os.path.expanduser('~/Documents/fanfou/'))
 
     def createForm(self):
         self.login = Frame(self.top)
@@ -111,10 +112,10 @@ class BackupUI(Frame):
         self.text.config(state=DISABLED)
 
     def selectPath(self):
-        self.outputPath = askdirectory(initialdir='.')
-        if self.outputPath:
+        path = askdirectory(initialdir='.')
+        if path:
             self.savePath.delete(0, END)
-            self.savePath.insert(END, self.outputPath)
+            self.savePath.insert(END, path)
 
     def write(self, message):
         if message and message.strip():
@@ -136,6 +137,9 @@ class BackupUI(Frame):
                 self.updateText(message)
         except queue.Empty:
             pass
+        running = self.thread and self.thread.is_alive()
+        self.btnStart.config(state=DISABLED if running else NORMAL)
+        self.btnStop.config(state=NORMAL if running else DISABLED)
         self.after(100, self.updateUI)
 
     def stop(self):
@@ -149,7 +153,7 @@ class BackupUI(Frame):
             showerror(const.NO_INPUT_TITLE, const.NO_INPUT_MESSAGE)
             return
         options = dict(zip(keys, values))
-        options['output'] = self.outputPath
+        options['output'] = self.outputPath.get()
         print('start backup with options:', options)
         self.text.config(state=NORMAL)
         self.text.delete('0.0', END)

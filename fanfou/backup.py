@@ -52,7 +52,7 @@ class Backup(object):
 
     def _precheck(self):
         if self.token:
-            print('载入用户[{1}]的本地登录信息 [{0}]'.format(
+            print('载入用户 [{1}] 的本地登录信息 [{0}]'.format(
                 self.token['oauth_token'], self.username))
             self.api.set_oauth_token(self.token)
         if self.auth_mode:
@@ -62,7 +62,7 @@ class Backup(object):
             else:
                 self.token = self.api.login(self.username, self.password)
                 self.user = self.api.user
-                print('保存用户[{1}]的登录信息 [{0}]'.format(
+                print('保存用户 [{1}] 的登录信息 [{0}]'.format(
                     self.token['oauth_token'], self.username))
                 utils.save_account_info(self.username, self.token)
         if not self.target and not self.user:
@@ -82,24 +82,24 @@ class Backup(object):
             target_user = self.api.get_user(self.target_id)
         except ApiError, e:
             if e.args[0] == 404:
-                print('你指定的用户[{0}]不存在'.format(self.target_id))
+                print('你指定的用户 [{0}] 不存在'.format(self.target_id))
             target_user = None
         if not target_user:
             print(
-                '无法获取用户[{0}]的信息'.format(self.target_id))
+                '无法获取用户 [{0}] 的信息'.format(self.target_id))
             return
-        print('用户[{0}]共有[{1}]条消息'.format(
+        print('用户 [{0}] 共有 [{1}] 条消息'.format(
             target_user['id'], target_user['statuses_count']))
         if not os.path.exists(self.output):
             os.mkdir(self.output)
-        print('开始备份用户[{0}]的消息...'.format(self.target_id))
+        print('开始备份用户 [{0}] 的消息...'.format(self.target_id))
         db_file = os.path.abspath(
             '{0}/{1}.db'.format(self.output, self.target_id))
-        print('备份位置：{0}'.format(db_file))
+        print('数据路径：{0}'.format(db_file))
         self.db = DB(db_file)
         db_count = self.db.get_status_count()
         if db_count:
-            print('发现数据库已备份消息{0}条'.format(db_count))
+            print('发现数据库已备份消息 {0} 条'.format(db_count))
         # first ,check new statuses
         self._fetch_newer_statuses()
         # then, check older status
@@ -112,10 +112,10 @@ class Backup(object):
 
     def _report(self):
         if self.total:
-            print('本次共备份[{1}]的{0}条消息'.format(
+            print('本次共备份 [{1}] 的 {0} 条消息'.format(
                 self.db.get_status_count(), self.target_id))
         else:
-            print('用户[{0}]的消息已备份，没有新增消息'.format(self.target_id))
+            print('用户 [{0}] 的消息已备份，没有新增消息'.format(self.target_id))
 
     def _fetch_newer_statuses(self):
         '''增量更新，获取比某一条新的数据（新发布的）'''
@@ -128,7 +128,7 @@ class Backup(object):
                     self.target_id, count=DEFAULT_COUNT, since_id=since_id)
                 if not timeline:
                     break
-                print("抓取到{0}条消息，正在保存...".format(len(timeline)))
+                print("抓取到 {0} 条消息，正在保存...".format(len(timeline)))
                 self.db.bulk_insert_status(timeline)
                 self.total += len(timeline)
                 time.sleep(1)
@@ -144,7 +144,7 @@ class Backup(object):
                 self.target_id, count=DEFAULT_COUNT, max_id=max_id)
             if not timeline:
                 break
-            print("抓取到{0}条消息，正在保存...".format(len(timeline)))
+            print("抓取到 {0} 条消息，正在保存...".format(len(timeline)))
             self.db.bulk_insert_status(timeline)
             self.total += len(timeline)
             time.sleep(1)
