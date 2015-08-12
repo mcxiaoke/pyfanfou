@@ -1,0 +1,22 @@
+/*
+* @Author: mcxiaoke
+* @Date:   2015-08-12 23:41:13
+* @Last Modified by:   mcxiaoke
+* @Last Modified time: 2015-08-12 23:48:19
+*/
+
+body{
+    font-size: 100%;
+}
+.status {
+    background-color: #cecece;
+    padding: 10px 10px;
+}
+
+.status_text {
+    font-size: 110%;
+}
+
+.status_author{
+    font-size: 60%;
+}
