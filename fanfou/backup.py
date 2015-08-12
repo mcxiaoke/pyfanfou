@@ -38,6 +38,7 @@ class Backup(object):
         self.cancelled = False
         self.total = 0
         self.user_total = 0
+        self.photo_total = 0
 
     def _parse_options(self, **options):
         '''
@@ -45,12 +46,16 @@ class Backup(object):
         password - 用户密码（可选）
         output - 数据保存目录
         target - 目标用户ID
+        user_flag - 是否备份好友资料
+        photo_flag - 是否备份相册照片
         '''
         self.username = options.get('username')
         self.password = options.get('password')
         self.auth_mode = self.username and self.password
         self.target = options.get('target')
         self.output = options.get('output') or 'output'
+        self.user_flag = options.get('user_flag') or 0
+        self.photo_flag = options.get('photo_flag') or 0
 
     def _precheck(self):
         if self.token:
@@ -106,8 +111,14 @@ class Backup(object):
         self._fetch_newer_statuses()
         # then, check older status
         self._fetch_older_statuses()
-        # check user followings
-        self._fetch_followings()
+        if self.photo_flag:
+            # check user photos
+            print('开始备份用户 [{0}] 的相册照片...'.format(self.target_id))
+            self._fetch_photos()
+        if self.user_flag:
+            # check user followings
+            print('开始备份用户 [{0}] 的好友资料...'.format(self.target_id))
+            self._fetch_followings()
         self._report()
         if self.cancelled:
             print('本次备份已终止')
@@ -116,11 +127,12 @@ class Backup(object):
         self.db.close()
 
     def _report(self):
-        if self.total:
-            print('本次共备份 [{1}] 的 {0} 条消息'.format(
-                self.db.get_status_count(), self.target_id))
-        else:
-            print('用户 [{0}] 的消息已备份，没有新增消息'.format(self.target_id))
+        print('本次共备份了 [{1}] 的 {0} 条消息'.format(
+            self.total, self.target_id))
+        print('本次共备份了 [{1}] 的 {0} 张照片'.format(
+            self.photo_total, self.target_id))
+        print('本次共备份了 [{1}] 的 {0} 个好友'.format(
+            self.user_total, self.target_id))
 
     def _fetch_followings(self):
         '''全量更新，获取全部好友数据'''
@@ -137,6 +149,46 @@ class Backup(object):
             page += 1
             time.sleep(1)
             if len(users) < DEFAULT_USER_COUNT:
+                break
+
+    def _download_photo(self, status):
+        photo = status['photo']
+        status_id = status['id']
+        if photo:
+            url = photo['largeurl']
+            img_dir = os.path.join(self.output, 'photos')
+            if not os.path.exists(img_dir):
+                os.makedirs(img_dir)
+            img_name = '{0}.{1}'.format(status_id, url[-3:] or 'jpg')
+            filename = os.path.join(img_dir, img_name)
+            if os.path.exists(filename):
+                # print('图片已存在，跳过 {0}'.format(url))
+                pass
+            else:
+                # print('开始下载图片 {0}'.format(url))
+                utils.download_and_save(url, filename)
+                # print('图片已保存到 {0}'.format(filename))
+        else:
+            # print('消息 {0} 中未找到照片'.format(status_id))
+            pass
+
+    def _fetch_photos(self):
+        tail_status = None
+        while(not self.cancelled):
+            max_id = tail_status['sid'] if tail_status else None
+            timeline = self.api.get_user_photos(
+                self.target_id, count=DEFAULT_COUNT, max_id=max_id)
+            if not timeline:
+                break
+            tail_status = timeline[-1:]
+            count = len(timeline)
+            print("正在下载照片 {0}~{1}...".format(
+                self.photo_total, self.photo_total+count))
+            for status in timeline:
+                self._download_photo(status)
+            self.photo_total += count
+            time.sleep(1)
+            if len(timeline) < DEFAULT_COUNT:
                 break
 
     def _fetch_newer_statuses(self):

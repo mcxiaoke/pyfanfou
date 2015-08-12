@@ -56,6 +56,8 @@ class BackupUI(Frame):
         self.dataQueue = queue.Queue()
         self.thread = None
         self.outputPath = StringVar()
+        self.userVar = IntVar(0)
+        self.photoVar = IntVar(0)
 
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
@@ -73,6 +75,16 @@ class BackupUI(Frame):
         self.btnStop = Button(frm, text='停止备份', command=self.stop)
         self.btnStop.pack(side=TOP)
         self.btnStop.config(state=DISABLED)
+
+        frm = Frame(self.top)
+        frm.pack(side=RIGHT, expand=YES, anchor=NE)
+        self.userCheck = Checkbutton(frm, text='备份好友资料', variable=self.userVar)
+        self.userCheck.config(command=self.callback)
+        self.userCheck.pack(side=TOP)
+        self.photoCheck = Checkbutton(
+            frm, text='备份相册照片', variable=self.photoVar)
+        self.photoCheck.config(command=self.callback)
+        self.photoCheck.pack(side=TOP)
 
         frm = Frame(self)
         frm.pack(side=TOP, anchor=W)
@@ -117,6 +129,9 @@ class BackupUI(Frame):
             self.savePath.delete(0, END)
             self.savePath.insert(END, path)
 
+    def callback(self):
+        print('callback', self.userVar.get(), self.photoVar.get())
+
     def write(self, message):
         if message and message.strip():
             # timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -154,7 +169,9 @@ class BackupUI(Frame):
             return
         options = dict(zip(keys, values))
         options['output'] = self.outputPath.get()
-        print('start backup with options:', options)
+        options['user_flag'] = self.userVar.get()
+        options['photo_flag'] = self.photoVar.get()
+        print('启动参数：', options)
         self.text.config(state=NORMAL)
         self.text.delete('0.0', END)
         self.text.config(state=DISABLED)

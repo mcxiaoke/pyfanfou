@@ -7,6 +7,8 @@ from datetime import datetime
 import time
 import pickle as store
 import json
+import requests
+import cStringIO
 
 ISO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 FANFOU_DATE_FORMAT = "%a %b %d %H:%M:%S +0000 %Y"
@@ -77,6 +79,13 @@ def normalize_timestamp(ts):
 
 def get_now_datetime_str():
     return normalize_datetime(datetime.now())
+
+
+def download_and_save(url, filename):
+    r = requests.get(url)
+    with open(filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=512):
+            f.write(chunk)
 
 if __name__ == '__main__':
     date_str = "Sat May 12 14:24:26 +0000 2007"
