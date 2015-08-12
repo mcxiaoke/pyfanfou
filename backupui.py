@@ -25,7 +25,6 @@ _stdout = sys.stdout
 
 
 class GuiOutput:
-    font = ('courier', 10, 'normal')
 
     def __init__(self, output):
         self.stdout = sys.stdout
@@ -40,11 +39,11 @@ class GuiOutput:
             self.write(line)
 
 
-def redirectFunc(out, func, **kargs):
+def redirectFunc(out, func, **kwargs):
     stdout = sys.stdout
     sys.stdout = GuiOutput(out)
     sys.stderr = sys.stdout
-    result = func(**kargs)
+    result = func(**kwargs)
     sys.stdout = stdout
     return result
 
@@ -56,7 +55,7 @@ class BackupUI(Frame):
 
         self.dataQueue = queue.Queue()
         self.thread = None
-        self.outputPath = os.path.abspath('.')
+        self.outputPath = os.path.expanduser('~/Documents/fanfou/')
 
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
@@ -105,7 +104,7 @@ class BackupUI(Frame):
         self.content.pack(side=LEFT, expand=YES, fill=BOTH)
         self.text = ScrolledText(self.content)
         self.text.pack(side=TOP, expand=YES, fill=BOTH)
-        self.text.config(bg='black', fg='white')
+        self.text.config(bg='light gray', fg='black')
         self.text.config(
             padx=10, pady=10, font=('Helvetica', 12, 'normal'))
         self.text.insert(END, const.USER_GUIDE)
