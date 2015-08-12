@@ -35,8 +35,12 @@ def convert_user(user):
     screen_name = user["screen_name"]
     created_at = normalize_fanfou_date(user["created_at"])
     added_at = get_now_datetime_str()
+    followers_count = user['followers_count']
+    followings_count = user['friends_count']
+    statuses_count = user['statuses_count']
     data = json.dumps(user)
-    return (id, screen_name, created_at, added_at, data)
+    return (id, screen_name, created_at, added_at,
+            followers_count, followings_count, statuses_count, data)
 
 
 def convert_status(status):
@@ -44,10 +48,11 @@ def convert_status(status):
     sid = status['id']
     user = status['user']
     uid = user['id']
+    text = status['text']
     created_at = normalize_fanfou_date(status["created_at"])
     added_at = get_now_datetime_str()
     data = json.dumps(user)
-    return (id, sid, uid, created_at, added_at, data)
+    return (id, sid, uid, text, created_at, added_at, data)
 
 
 def parse_fanfou_date(date_str):

@@ -209,5 +209,5 @@ if __name__ == '__main__':
     client.login("test", "test")
     client.verify_credentials()
     # client.get_home_timeline(count=1)
-    #user = client.get_user("wangxing", mode="default", format="html")
-    #timeline = client.get_user_timeline("blessedkristin", count=1)
+    print client.get_user("wangxing", mode="default", format="html")
+    # print client.get_user_timeline("wangxing", count=1)

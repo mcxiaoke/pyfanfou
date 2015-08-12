@@ -16,6 +16,7 @@ import os
 import logging
 
 DEFAULT_COUNT = 60
+DEFAULT_USER_COUNT = 100
 
 __version__ = '1.0.0'
 
@@ -104,6 +105,8 @@ class Backup(object):
         self._fetch_newer_statuses()
         # then, check older status
         self._fetch_older_statuses()
+        # check user followings
+        self._fetch_followings()
         self._report()
         if self.cancelled:
             print('本次备份已终止')
@@ -116,6 +119,19 @@ class Backup(object):
                 self.db.get_status_count(), self.target_id))
         else:
             print('用户 [{0}] 的消息已备份，没有新增消息'.format(self.target_id))
+
+    def _fetch_followings(self):
+        '''全量更新，获取全部好友数据'''
+        page = 0
+        while(not self.cancelled):
+            users = self.api.get_friends(page=page)
+            if not users:
+                break
+            print("抓取到 {0} 条用户资料，正在保存...".format(len(users)))
+            self.db.bulk_insert_user(users)
+            page += 1
+            if len(users) < DEFAULT_USER_COUNT:
+                break
 
     def _fetch_newer_statuses(self):
         '''增量更新，获取比某一条新的数据（新发布的）'''
@@ -137,7 +153,7 @@ class Backup(object):
 
     def _fetch_older_statuses(self):
         '''增量更新，获取比某一条旧的数据'''
-        while(not self.cancelled):
+        while not self.cancelled:
             tail_status = self.db.get_oldest_status()
             max_id = tail_status['sid'] if tail_status else None
             timeline = self.api.get_user_timeline(

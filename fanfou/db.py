@@ -39,6 +39,9 @@ USER_TABLE_CREATE_SQL = (
     ' screen_name TEXT, '
     ' created_at TEXT, '
     ' added_at TEXT, '
+    ' followers_count INTEGER, '
+    ' followings_count INTEGER, '
+    ' statuses_count INTEGER, '
     ' data TEXT, '
     ' UNIQUE (id) ); '
 )
@@ -49,6 +52,7 @@ STATUS_TABLE_CREATE_SQL = (
     ' id INTEGER, '
     ' sid TEXT, '
     ' uid TEXT,'
+    ' text TEXT, '
     ' created_at TEXT, '
     ' added_at TEXT, '
     ' data TEXT, '
@@ -118,8 +122,9 @@ class DB(BaseDB):
         values = utils.convert_user(user)
         c = self.conn.cursor()
         c.execute(("INSERT OR REPLACE INTO user "
-                   " (id,screen_name,created_at,added_at,data) "
-                   " VALUES (?,?,?,?,?) "), *values)
+                   " (id,screen_name,followers_count,followings_count,"
+                   "statuses_count,created_at,added_at,data) "
+                   " VALUES (?,?,?,?,?,?,?,?) "), *values)
         print "insert_user: %d rows inserted to database" % c.rowcount
         self.conn.commit()
         return c
@@ -128,8 +133,9 @@ class DB(BaseDB):
         values = [utils.convert_user(user) for user in user_list]
         c = self.conn.cursor()
         c.executemany(("INSERT OR REPLACE INTO user "
-                       " (id,screen_name,created_at,added_at,data) "
-                       " VALUES (?,?,?,?,?) "), values)
+                       " (id,screen_name,followers_count,followings_count,"
+                       "statuses_count,created_at,added_at,data) "
+                       " VALUES (?,?,?,?,?,?,?,?) "), values)
         print "%d 条用户资料已存储到数据库" % c.rowcount
         self.conn.commit()
         return c
@@ -138,8 +144,8 @@ class DB(BaseDB):
         values = utils.convert_status(status)
         c = self.conn.cursor()
         c.execute(("INSERT OR REPLACE INTO status "
-                   " (id,sid,uid,created_at,added_at,data) "
-                   " VALUES (?,?,?,?,?,?) "), *values)
+                   " (id,sid,uid,text,created_at,added_at,data) "
+                   " VALUES (?,?,?,?,?,?,?) "), *values)
         self.conn.commit()
         print "insert_status: %d rows inserted to database" % c.rowcount
         return c
@@ -148,8 +154,8 @@ class DB(BaseDB):
         values = [utils.convert_status(status) for status in status_list]
         c = self.conn.cursor()
         c.executemany(("INSERT OR REPLACE INTO status "
-                       " (id,sid,uid,created_at,added_at,data) "
-                       " VALUES (?,?,?,?,?,?) "), values)
+                       " (id,sid,uid,text,created_at,added_at,data) "
+                       " VALUES (?,?,?,?,?,?,?) "), values)
         self.conn.commit()
         print "%d 条消息已存储到数据库" % c.rowcount
         return c
