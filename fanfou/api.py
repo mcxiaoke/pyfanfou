@@ -188,12 +188,12 @@ class ApiClient(object):
     def get_followers(self, user_id=None, **kwargs):
         params = kwargs if kwargs else {}
         params["id"] = user_id
-        return self.get("/users/followers", params=params)
+        return self.get("/statuses/followers", params=params)
 
     def get_friends(self, user_id=None, **kwargs):
         params = kwargs if kwargs else {}
         params["id"] = user_id
-        return self.get("/users/friends", params=params)
+        return self.get("/statuses/friends", params=params)
 
     def update_profile(self, **kwargs):
         data = kwargs if kwargs else {}

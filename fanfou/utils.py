@@ -39,8 +39,8 @@ def convert_user(user):
     followings_count = user['friends_count']
     statuses_count = user['statuses_count']
     data = json.dumps(user)
-    return (id, screen_name, created_at, added_at,
-            followers_count, followings_count, statuses_count, data)
+    return (id, screen_name, followers_count, followings_count,
+            statuses_count, created_at, added_at, data)
 
 
 def convert_status(status):

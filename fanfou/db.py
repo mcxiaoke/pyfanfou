@@ -37,11 +37,11 @@ USER_TABLE_CREATE_SQL = (
     ' ( _id INTEGER PRIMARY KEY, '
     ' id TEXT, '
     ' screen_name TEXT, '
-    ' created_at TEXT, '
-    ' added_at TEXT, '
     ' followers_count INTEGER, '
     ' followings_count INTEGER, '
     ' statuses_count INTEGER, '
+    ' created_at TEXT, '
+    ' added_at TEXT, '
     ' data TEXT, '
     ' UNIQUE (id) ); '
 )

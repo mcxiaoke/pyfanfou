@@ -37,6 +37,7 @@ class Backup(object):
         self.db = None
         self.cancelled = False
         self.total = 0
+        self.user_total = 0
 
     def _parse_options(self, **options):
         '''
@@ -112,6 +113,7 @@ class Backup(object):
             print('本次备份已终止')
         else:
             print('本次备份已完成')
+        self.db.close()
 
     def _report(self):
         if self.total:
@@ -124,12 +126,16 @@ class Backup(object):
         '''全量更新，获取全部好友数据'''
         page = 0
         while(not self.cancelled):
-            users = self.api.get_friends(page=page)
+            users = self.api.get_friends(self.target_id, page=page)
             if not users:
                 break
-            print("抓取到 {0} 条用户资料，正在保存...".format(len(users)))
+            count = len(users)
+            print("正在保存用户资料 {0}~{1}...".format(
+                self.user_total, self.user_total+count))
             self.db.bulk_insert_user(users)
+            self.user_total += count
             page += 1
+            time.sleep(1)
             if len(users) < DEFAULT_USER_COUNT:
                 break
 
@@ -144,9 +150,10 @@ class Backup(object):
                     self.target_id, count=DEFAULT_COUNT, since_id=since_id)
                 if not timeline:
                     break
-                print("抓取到 {0} 条消息，正在保存...".format(len(timeline)))
+                count = len(timeline)
+                print("正在保存消息 {0}~{1}...".format(self.total, self.total+count))
                 self.db.bulk_insert_status(timeline)
-                self.total += len(timeline)
+                self.total += count
                 time.sleep(1)
                 if len(timeline) < DEFAULT_COUNT:
                     break
@@ -160,9 +167,10 @@ class Backup(object):
                 self.target_id, count=DEFAULT_COUNT, max_id=max_id)
             if not timeline:
                 break
-            print("抓取到 {0} 条消息，正在保存...".format(len(timeline)))
+            count = len(timeline)
+            print("正在保存消息 {0}~{1}...".format(self.total, self.total+count))
             self.db.bulk_insert_status(timeline)
-            self.total += len(timeline)
+            self.total += count
             time.sleep(1)
             if len(timeline) < DEFAULT_COUNT:
                 break
