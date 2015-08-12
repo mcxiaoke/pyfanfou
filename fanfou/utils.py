@@ -5,7 +5,7 @@
 
 from datetime import datetime
 import time
-import cPickle as store
+import pickle as store
 import json
 
 ISO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"

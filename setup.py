@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from lib import const
-from lib import backup
+from fanfou import const
 
 readme_file = open("README.md", "rt").read()
 

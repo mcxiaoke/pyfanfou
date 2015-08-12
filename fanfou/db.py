@@ -4,7 +4,7 @@
 # @Date:   2015-08-05 20:07:34
 
 import utils
-from lib.basedb import BaseDB
+from basedb import BaseDB
 
 KV_TABLE = "kv"
 LOG_TABLE = "log"

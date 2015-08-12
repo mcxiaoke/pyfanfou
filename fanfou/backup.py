@@ -9,11 +9,10 @@ from __future__ import print_function
 import argparse
 import utils
 import time
-from lib.api import ApiClient
-from lib.api import ApiError
+from api import ApiClient
+from api import ApiError
 from db import DB
 import os
-import sys
 import logging
 
 DEFAULT_COUNT = 60
@@ -55,28 +54,30 @@ class Backup(object):
         if self.token:
             print('载入用户[{1}]的本地登录信息 [{0}]'.format(
                 self.token['oauth_token'], self.username))
-            self.api.set_oauth_token(token)
+            self.api.set_oauth_token(self.token)
         if self.auth_mode:
             if self.api.is_verified():
-                self.token = api.oauth_token
-                self.user = api.user
+                self.token = self.api.oauth_token
+                self.user = self.api.user
             else:
-                self.token = api.login(username, password)
-                self.user = api.user
+                self.token = self.api.login(self.username, self.password)
+                self.user = self.api.user
                 print('保存用户[{1}]的登录信息 [{0}]'.format(
                     self.token['oauth_token'], self.username))
                 utils.save_account_info(self.username, self.token)
         if not self.target and not self.user:
-            print('没有指定要备份的用户')
+            print('没有指定备份的目标用户')
             return
         self.target_id = self.target or self.user['id']
 
-    def cancel(self):
+    def stop(self):
+        print('收到终止备份的命令，即将停止...')
         self.cancelled = True
-        print('备份即将停止...')
 
     def start(self):
         self._precheck()
+        if not self.target_id:
+            return
         try:
             target_user = self.api.get_user(self.target_id)
         except ApiError, e:
@@ -87,25 +88,31 @@ class Backup(object):
             print(
                 '无法获取用户[{0}]的信息'.format(self.target_id))
             return
-        print('用户[{0}]共有[{1}]条消息，准备备份...'.format(
+        print('用户[{0}]共有[{1}]条消息'.format(
             target_user['id'], target_user['statuses_count']))
         if not os.path.exists(self.output):
             os.mkdir(self.output)
-        print('开始备份用户[{0}]的消息数据...'.format(self.target_id))
+        print('开始备份用户[{0}]的消息...'.format(self.target_id))
         db_file = os.path.abspath(
             '{0}/{1}.db'.format(self.output, self.target_id))
-        print('用户数据备份位置：{0}'.format(db_file))
+        print('备份位置：{0}'.format(db_file))
         self.db = DB(db_file)
+        db_count = self.db.get_status_count()
+        if db_count:
+            print('发现数据库已备份消息{0}条'.format(db_count))
         # first ,check new statuses
         self._fetch_newer_statuses()
         # then, check older status
         self._fetch_older_statuses()
         self._report()
-        print('消息备份已完成')
+        if self.cancelled:
+            print('本次备份已终止')
+        else:
+            print('本次备份已完成')
 
     def _report(self):
         if self.total:
-            print('已备份用户[{1}]的{0}条消息'.format(
+            print('本次共备份[{1}]的{0}条消息'.format(
                 self.db.get_status_count(), self.target_id))
         else:
             print('用户[{0}]的消息已备份，没有新增消息'.format(self.target_id))
@@ -121,11 +128,10 @@ class Backup(object):
                     self.target_id, count=DEFAULT_COUNT, since_id=since_id)
                 if not timeline:
                     break
-                print("抓取到用户[{0}]的{1}条消息，正在保存...".format(
-                    self.target_id, len(timeline)))
+                print("抓取到{0}条消息，正在保存...".format(len(timeline)))
                 self.db.bulk_insert_status(timeline)
                 self.total += len(timeline)
-                time.sleep(2)
+                time.sleep(1)
                 if len(timeline) < DEFAULT_COUNT:
                     break
 
@@ -138,11 +144,10 @@ class Backup(object):
                 self.target_id, count=DEFAULT_COUNT, max_id=max_id)
             if not timeline:
                 break
-            print("抓取到用户[{0}]的{1}条消息，正在保存...".format(
-                self.target_id, len(timeline)))
+            print("抓取到{0}条消息，正在保存...".format(len(timeline)))
             self.db.bulk_insert_status(timeline)
             self.total += len(timeline)
-            time.sleep(2)
+            time.sleep(1)
             if len(timeline) < DEFAULT_COUNT:
                 break
 
@@ -168,8 +173,4 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        options = {'target': 'androidsupport'}
-        backup(**options)
-    else:
-        backup(**vars(parse_args()))
+    Backup(**vars(parse_args())).start()

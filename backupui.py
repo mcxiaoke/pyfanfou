@@ -5,9 +5,9 @@
 from __future__ import print_function
 import textwrap
 import sys
-import os
+import imp
 import threading
-import subprocess
+from datetime import datetime
 import Queue as queue
 from Tkinter import *
 from ttk import Separator
@@ -15,11 +15,12 @@ from tkFileDialog import *
 from tkSimpleDialog import *
 from tkMessageBox import showerror, showinfo
 from ScrolledText import ScrolledText
-from lib import const
-from lib import backup
-from imp import reload
+from fanfou import const
+from fanfou import backup
 
 __version__ = const.APP_VERSION
+
+_stdout = sys.stdout
 
 
 class GuiOutput:
@@ -49,13 +50,8 @@ def redirectFunc(out, func, **kargs):
 
 class BackupUI(Frame):
 
-    dataQueue = queue.Queue()
-
     def __init__(self, parent=None, **options):
         Frame.__init__(self, parent)
-
-        self.backup = None
-
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
         self.top.config(bd=2)
@@ -108,12 +104,19 @@ class BackupUI(Frame):
         self.text = ScrolledText(self)
         self.text.pack(side=TOP, expand=YES, fill=BOTH)
         self.text.config(bg='black', fg='white')
+        self.text.config(width=20, height=20)
         self.text.config(
-            padx=10, pady=10, font=('Helvetica', 10, 'normal'))
+            padx=10, pady=10, font=('Helvetica', 12, 'normal'))
         self.text.insert(END, 'This is English Text. 中文显示有没有问题。')
 
+        self.dataQueue = queue.Queue()
+        self.thread = None
+
     def write(self, message):
-        self.dataQueue.put(message)
+        if message and message.strip():
+            # timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.dataQueue.put(timestamp+" - "+message+'\n')
 
     def updateText(self, message):
         self.text.insert(END, str(message))
@@ -127,28 +130,49 @@ class BackupUI(Frame):
                 self.updateText(message)
         except queue.Empty:
             pass
-        self.after(200, self.updateUI)
+        self.after(100, self.updateUI)
 
     def stop(self):
-        if getattr(self, 'backup'):
-            self.backup.cancel()
-        else:
-            print('备份还没有开始')
+        if getattr(self, 'thread'):
+            self.thread.stop()
 
     def start(self):
         keys = ['username', 'password', 'target']
         values = map(lambda x: x.get(), self.inputs)
         if not any(values):
             showerror(const.NO_INPUT_TITLE, const.NO_INPUT_MESSAGE)
+            return
+        options = dict(zip(keys, values))
+        print('start backup with options:', options)
+        self.text.delete('0.0', END)
+        self.updateUI()
+        self.thread = BackupThread(self, self.dataQueue, **options)
+        self.thread.start()
+
+
+class BackupThread(threading.Thread):
+
+    def __init__(self, callback, dataQueue, **options):
+        super(BackupThread, self).__init__(name='BackupThread')
+        imp.reload(backup)
+        self.callback = callback
+        self.dataQueue = dataQueue
+        self.backup = backup.Backup(**options)
+
+    def write(self, message):
+        if message and message.strip():
+            # timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.dataQueue.put(timestamp+" - "+message+'\n')
+
+    def stop(self):
+        if getattr(self, 'backup'):
+            self.backup.stop()
         else:
-            options = dict(zip(keys, values))
-            # print('prepare backup options:', options)
-            self.backup = tools.Backup(**options)
-            reload(tools)
-            threading.Thread(
-                target=redirectFunc(self, self.backup.start)).start()
-            self.text.delete('0.0', END)
-            self.updateUI()
+            print('备份还没有开始')
+
+    def run(self):
+        redirectFunc(self, self.backup.start)
 
 
 def start():
