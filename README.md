@@ -1,11 +1,12 @@
 ## 饭否消息备份脚本
 
-备份指定用户的全部饭否消息，包括消息附带的图片，存储为SQLite3数据库文件，后续将支持导出为HTML/Markdown/PDF 
+备份指定用户的全部饭否消息，可选备份用户的相册照片和好友资料列表，存储为SQLite3数据库文件，后续将支持导出为HTML/Markdown/PDF 
 
 
 ### GUI界面使用
 
 不带参数启动
+
 ```
 python fanfoubackup.py
 ```
@@ -15,6 +16,14 @@ python fanfoubackup.py
 ```
 python backupui.py
 ```
+
+#### 截图一
+
+![ui1](images/backupui1.png)
+
+#### 截图二
+
+![ui2](images/backupui2.png)
 
 ### 命令行使用
 
