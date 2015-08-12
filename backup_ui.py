@@ -17,21 +17,21 @@ from tkMessageBox import showerror, showinfo
 from ScrolledText import ScrolledText
 import const
 from backup import tools
+from imp import reload
 
-__version__ = '1.0.0'
+__version__ = const.APP_VERSION
 
 
 class GuiOutput:
     font = ('courier', 10, 'normal')
 
     def __init__(self, output):
+        self.stdout = sys.stdout
         self.output = output
 
     def write(self, text):
+        # self.stdout.write(text)
         self.output.write(text)
-        # self.output.insert(END, str(text))
-        # self.output.see(END)
-        # self.output.update()
 
     def writelines(self, lines):
         for line in lines:
@@ -54,6 +54,8 @@ class BackupUI(Frame):
     def __init__(self, parent=None, **options):
         Frame.__init__(self, parent)
 
+        self.backup = None
+
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
         self.top.config(bd=2)
@@ -62,8 +64,8 @@ class BackupUI(Frame):
         self.login = Frame(self.top)
         self.login.config(padx=4, pady=4)
         self.login.pack(side=LEFT)
-        row_names = ['饭否帐号：', '饭否密码：', '目标用户：']
-        row_comments = ['*备份私密帐号数据必填', '*备份私密帐号数据必填', '*要备份的用户ID（可选）']
+        row_names = const.LOGIN_FIELDS
+        row_comments = const.LOGIN_COMMENTS
 
         self.inputs = []
         for i in range(3):
@@ -82,10 +84,12 @@ class BackupUI(Frame):
         self.login.columnconfigure(1, weight=1)
         self.login.columnconfigure(2, weight=1)
 
-        self.bgrp = Frame(self.top)
+        self.bgrp = Frame(self.top, padx=10, pady=10)
         self.bgrp.pack(side=RIGHT, expand=YES, fill=Y)
         self.btnStart = Button(self.bgrp, text='开始备份', command=self.start)
         self.btnStart.pack(side=TOP)
+        self.btnStop = Button(self.bgrp, text='停止备份', command=self.stop)
+        self.btnStop.pack(side=TOP)
 
         self.intro = Label(
             self, text=textwrap.fill(const.AUTH_DESCRIPTION, 60))
@@ -125,6 +129,12 @@ class BackupUI(Frame):
             pass
         self.after(200, self.updateUI)
 
+    def stop(self):
+        if getattr(self, 'backup'):
+            self.backup.cancel()
+        else:
+            print('备份还没有开始')
+
     def start(self):
         keys = ['username', 'password', 'target']
         values = map(lambda x: x.get(), self.inputs)
@@ -132,19 +142,29 @@ class BackupUI(Frame):
             showerror(const.NO_INPUT_TITLE, const.NO_INPUT_MESSAGE)
         else:
             options = dict(zip(keys, values))
-            print('prepare backup options:', options)
-            func = lambda: redirectFunc(self, tools.backup, **options)
-            threading.Thread(target=func).start()
-            self.text.delete('0.0',END)
+            # print('prepare backup options:', options)
+            self.backup = tools.Backup(**options)
+            reload(tools)
+            threading.Thread(
+                target=redirectFunc(self, self.backup.start)).start()
+            self.text.delete('0.0', END)
             self.updateUI()
+
+
+def _exit():
+    try:
+        root.quit()
+        ui.stop()
+    except Exception, e:
+        sys.exit
 
 if __name__ == '__main__':
 
     root = Tk()
-    #root.protocol('WM_DELETE_WINDOW', sys.exit)
-    root.title('饭否数据备份工具 v{0}'.format(__version__))
-    root.iconname('饭否备份工具')
+    root.title('{0} v{1}'.format(const.APP_NAME, __version__))
+    root.iconname(const.APP_NAME)
     # root.minsize(320, 240)
     ui = BackupUI(root)
     ui.pack()
+    root.protocol('WM_DELETE_WINDOW', _exit)
     root.mainloop()

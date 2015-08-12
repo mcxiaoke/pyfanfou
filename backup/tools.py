@@ -23,106 +23,128 @@ __version__ = '1.0.0'
 logger = logging.getLogger(__name__)
 
 
-def _fetch_newer_statuses(api, db, uid, callback=None):
-    '''增量更新，获取比某一条新的数据（新发布的）'''
-    count = 0
-    head_status = db.get_latest_status()
-    if head_status:
-        while(not callback or not callback.isCancelled()):
-            head_status = db.get_latest_status()
-            since_id = head_status['sid'] if head_status else None
-            timeline = api.get_user_timeline(
-                uid, count=DEFAULT_COUNT, since_id=since_id)
+class Backup(object):
+
+    def __init__(self, **options):
+        '''
+        备份指定用户的饭否消息数据
+        '''
+        self._parse_options(**options)
+        self.api = ApiClient(False)
+        self.token = utils.load_account_info(self.username)
+        self.user = None
+        self.target_id = None
+        self.db = None
+        self.cancelled = False
+        self.total = 0
+
+    def _parse_options(self, **options):
+        '''
+        username - 用户帐号（可选）
+        password - 用户密码（可选）
+        output - 数据保存目录
+        target - 目标用户ID
+        '''
+        self.username = options.get('username')
+        self.password = options.get('password')
+        self.auth_mode = self.username and self.password
+        self.target = options.get('target')
+        self.output = options.get('output') or 'output'
+
+    def _precheck(self):
+        if self.token:
+            print('载入用户[{1}]的本地登录信息 [{0}]'.format(
+                self.token['oauth_token'], self.username))
+            self.api.set_oauth_token(token)
+        if self.auth_mode:
+            if self.api.is_verified():
+                self.token = api.oauth_token
+                self.user = api.user
+            else:
+                self.token = api.login(username, password)
+                self.user = api.user
+                print('保存用户[{1}]的登录信息 [{0}]'.format(
+                    self.token['oauth_token'], self.username))
+                utils.save_account_info(self.username, self.token)
+        if not self.target and not self.user:
+            print('没有指定要备份的用户')
+            return
+        self.target_id = self.target or self.user['id']
+
+    def cancel(self):
+        self.cancelled = True
+        print('备份即将停止...')
+
+    def start(self):
+        self._precheck()
+        try:
+            target_user = self.api.get_user(self.target_id)
+        except ApiError, e:
+            if e.args[0] == 404:
+                print('你指定的用户[{0}]不存在'.format(self.target_id))
+            target_user = None
+        if not target_user:
+            print(
+                '无法获取用户[{0}]的信息'.format(self.target_id))
+            return
+        print('用户[{0}]共有[{1}]条消息，准备备份...'.format(
+            target_user['id'], target_user['statuses_count']))
+        if not os.path.exists(self.output):
+            os.mkdir(self.output)
+        print('开始备份用户[{0}]的消息数据...'.format(self.target_id))
+        db_file = os.path.abspath(
+            '{0}/{1}.db'.format(self.output, self.target_id))
+        print('用户数据备份位置：{0}'.format(db_file))
+        self.db = DB(db_file)
+        # first ,check new statuses
+        self._fetch_newer_statuses()
+        # then, check older status
+        self._fetch_older_statuses()
+        self._report()
+        print('消息备份已完成')
+
+    def _report(self):
+        if self.total:
+            print('已备份用户[{1}]的{0}条消息'.format(
+                self.db.get_status_count(), self.target_id))
+        else:
+            print('用户[{0}]的消息已备份，没有新增消息'.format(self.target_id))
+
+    def _fetch_newer_statuses(self):
+        '''增量更新，获取比某一条新的数据（新发布的）'''
+        head_status = self.db.get_latest_status()
+        if head_status:
+            while(not self.cancelled):
+                head_status = self.db.get_latest_status()
+                since_id = head_status['sid'] if head_status else None
+                timeline = self.api.get_user_timeline(
+                    self.target_id, count=DEFAULT_COUNT, since_id=since_id)
+                if not timeline:
+                    break
+                print("抓取到用户[{0}]的{1}条消息，正在保存...".format(
+                    self.target_id, len(timeline)))
+                self.db.bulk_insert_status(timeline)
+                self.total += len(timeline)
+                time.sleep(2)
+                if len(timeline) < DEFAULT_COUNT:
+                    break
+
+    def _fetch_older_statuses(self):
+        '''增量更新，获取比某一条旧的数据'''
+        while(not self.cancelled):
+            tail_status = self.db.get_oldest_status()
+            max_id = tail_status['sid'] if tail_status else None
+            timeline = self.api.get_user_timeline(
+                self.target_id, count=DEFAULT_COUNT, max_id=max_id)
             if not timeline:
                 break
-            print("抓取到用户[{0}]的{1}条消息，正在保存...".format(uid, len(timeline)))
-            db.bulk_insert_status(timeline)
-            count += len(timeline)
+            print("抓取到用户[{0}]的{1}条消息，正在保存...".format(
+                self.target_id, len(timeline)))
+            self.db.bulk_insert_status(timeline)
+            self.total += len(timeline)
             time.sleep(2)
             if len(timeline) < DEFAULT_COUNT:
                 break
-    return count
-
-
-def _fetch_older_statuses(api, db, uid, callback=None):
-    '''增量更新，获取比某一条旧的数据'''
-    count = 0
-    while(not callback or not callback.isCancelled()):
-        tail_status = db.get_oldest_status()
-        max_id = tail_status['sid'] if tail_status else None
-        timeline = api.get_user_timeline(
-            uid, count=DEFAULT_COUNT, max_id=max_id)
-        if not timeline:
-            break
-        print("抓取到用户[{0}]的{1}条消息，正在保存...".format(uid, len(timeline)))
-        db.bulk_insert_status(timeline)
-        count += len(timeline)
-        time.sleep(2)
-        if len(timeline) < DEFAULT_COUNT:
-            break
-    return count
-
-
-def backup(username=None, password=None, **options):
-    '''
-    备份饭否指定用户的饭否消息数据
-
-    username - 用户帐号（可选）
-    password - 用户密码（可选）
-    output - 数据保存目录
-    target - 目标用户ID
-    '''
-    auth_mode = username and password
-    target = options.get('target')
-    output = options.get('output') or 'output'
-    verbose = options.get('verbose') != None
-    api = ApiClient(verbose)
-    token = utils.load_account_info(username)
-    if token:
-        print('载入用户[{1}]的本地登录信息 [{0}]'.format(
-            token['oauth_token'], username))
-        api.set_oauth_token(token)
-    user = None
-    if auth_mode:
-        if api.is_verified():
-            token = api.oauth_token
-            user = api.user
-        else:
-            token = api.login(username, password)
-            user = api.user
-            print('保存用户[{1}]的登录信息 [{0}]'.format(
-                token['oauth_token'], username))
-            utils.save_account_info(username, token)
-    if not target and not user:
-        print('没有指定要备份的用户')
-        return
-    target_id = target or user['id']
-    try:
-        target_user = api.get_user(target_id)
-    except ApiError, e:
-        if e.args[0] == 404:
-            print('你指定的用户[{0}]不存在'.format(target_id))
-        target_user = None
-    if not target_user:
-        print(
-            '无法获取用户[{0}]的信息'.format(target_id))
-        return
-    if not os.path.exists(output):
-        os.mkdir(output)
-    print('开始备份用户[{0}]的消息数据...'.format(target_id))
-    db_file = os.path.abspath('{0}/{1}.db'.format(output, target_id))
-    print('用户数据备份位置：{0}'.format(db_file))
-    db = DB(db_file)
-    total = 0
-    # first ,check new statuses
-    total += _fetch_newer_statuses(api, db, target_id)
-    # then, check older status
-    total += _fetch_older_statuses(api, db, target_id)
-    if total:
-        print('用户[{1}]的全部{0}条消息已保存'.format(
-            db.get_status_count(), target_id))
-    else:
-        print('用户[{0}]的全部消息已保存，没有新增消息'.format(target_id))
 
 
 def parse_args():
