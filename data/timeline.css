@@ -2,21 +2,49 @@
 * @Author: mcxiaoke
 * @Date:   2015-08-12 23:41:13
 * @Last Modified by:   mcxiaoke
-* @Last Modified time: 2015-08-12 23:48:19
+* @Last Modified time: 2015-08-13 09:15:12
 */
 
-body{
+html,body,p {
     font-size: 100%;
-}
-.status {
-    background-color: #cecece;
-    padding: 10px 10px;
+    padding: 0;
+    margin: 0;
 }
 
-.status_text {
-    font-size: 110%;
+.status{
+     margin:0px auto;
+     padding: 8px;
+     width:640px;
+     height:100%;
+     border:1px solid #f4f4f4;
+     background-color: #f9fcfc;
+}
+
+
+.status_text{
+    color:#444444;
 }
 
 .status_author{
-    font-size: 60%;
+    font-size: 80%;
+    margin-bottom: 8px;
+}
+
+.status_author p{
+    display: inline-block;
+}
+
+.status_author_name {
+    color: #222222;
+    font-weight: bold;
+}
+
+.status_author_id {
+    color: #666666;
+}
+
+.status_author_time{
+    font-size: 70%;
+    margin-left: 8px;
+    color:#666666;
 }
