@@ -15,7 +15,7 @@ import template
 import utils
 
 
-def _render_status(it, out, outDir):
+def _render_status_html(it, out, outDir):
     id = it['id']
     name = it['user']['screen_name']
     uid = it['user']['id']
@@ -36,7 +36,7 @@ def _render_status(it, out, outDir):
     out.write(status.encode('utf8'))
 
 
-def _render(data, outDir):
+def _render_html(data, outDir):
     first = data[0]
     user = first['user']
     title = u'{0}的消息'.format(user['screen_name'])
@@ -47,17 +47,17 @@ def _render(data, outDir):
     out.write(u'<div class="timeline">')
     for it in data:
         #print('render status ',it['id'])
-        _render_status(it, out, outDir)
+        _render_status_html(it, out, outDir)
 
     out.write(u'</div>')
     out.write(template.BODY_FOOTER)
     return out.getvalue()
 
 
-def render(data, fileOut):
+def render_html(data, fileOut):
     inData = data
     # inData = json.load(open(fileIn, 'r'))
-    outData = _render(inData, os.path.dirname(fileOut))
+    outData = _render_html(inData, os.path.dirname(fileOut))
     # http://stackoverflow.com/questions/6048085/python-write-unicode-text-to-a-text-file
     tempfile = os.path.join(unicode(time.time()))
     with open(tempfile, 'w') as out:

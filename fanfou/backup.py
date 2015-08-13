@@ -160,7 +160,7 @@ class Backup(object):
             fileOut = os.path.join(
                 self.output, '{0}.html'.format(self.target_id))
             print('开始导出{0}的消息列表为HTML文件...'.format(self.target_id))
-            renderer.render(data, fileOut)
+            renderer.render_html(data, fileOut)
             print('HTML文件', fileOut)
 
     def _fetch_followings(self):
