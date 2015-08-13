@@ -187,12 +187,31 @@ class Backup(object):
             img_name = '{0}.{1}'.format(status_id, url[-3:] or 'jpg')
             filename = os.path.join(img_dir, img_name)
             if os.path.exists(filename):
-                print('跳过已存在的照片 {0}'.format(img_name))
+                print('照片已存在 {0}'.format(img_name))
             else:
-                print('正在备份照片 {0}'.format(img_name))
+                print('正在下载照片 {0}'.format(img_name))
                 utils.download_and_save(url, filename)
 
     def _fetch_photos(self):
+        rows = self.db.get_photo_status()
+        if not rows:
+            print('{0}的相册里没有照片'.format(self.target_id))
+            return
+        photos = []
+        for row in rows:
+            photos.append(json.loads(row['data']))
+        count = len(photos)
+        print("正在下载第{0}-{1}张照片 ...".format(
+            self.photo_total, self.photo_total+count))
+        for photo in photos:
+            if self.cancelled:
+                break
+            self._download_photo(photo)
+        self.photo_total += count
+
+    def _download_photos(self):
+        photos = self.db.get_photo_status()
+        print('photos', len(photos))
         tail_status = None
         while(not self.cancelled):
             max_id = tail_status['id'] if tail_status else None

@@ -95,6 +95,10 @@ class DB(BaseDB):
     def get_all_status(self):
         return self.fetch_all('status')
 
+    def get_photo_status(self):
+        return self.execute(
+            'select * from status where photo = "1";').fetchall()
+
         # oldest user order by creation time
     def get_oldest_user(self):
         c = self.execute("select id,screen_name,created_at from user "

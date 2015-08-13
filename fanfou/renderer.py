@@ -24,11 +24,8 @@ def _render_status(it, out, outDir):
     text = it['text']
     if it.get('photo'):
         imgfile = os.path.join('{0}-photos'.format(uid), '{0}.jpg'.format(id))
-        if os.path.exists(os.path.join(outDir, imgfile)):
-            photo = imgfile
-        else:
-            photo = it['photo']['url']
-        print(photo)
+        imgpath = os.path.join(outDir, imgfile)
+        photo = imgfile if os.path.exists(imgpath) else it['photo']['url']
     else:
         photo = ''
     tpl = Template(template.STATUS_TEMPLATE)
