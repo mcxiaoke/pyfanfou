@@ -11,6 +11,7 @@ import requests
 import cStringIO
 
 ISO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+ONLY_DATE_FORMAT = "%Y-%m-%d"
 FANFOU_DATE_FORMAT = "%a %b %d %H:%M:%S +0000 %Y"
 
 
@@ -51,10 +52,11 @@ def convert_status(status):
     user = status['user']
     uid = user['id']
     text = status['text']
+    photo = 1 if status.get('photo') else 0
     created_at = normalize_fanfou_date(status["created_at"])
     added_at = get_now_datetime_str()
     data = json.dumps(status)
-    return (id, sid, uid, text, created_at, added_at, data)
+    return (id, sid, uid, text, photo, created_at, added_at, data)
 
 
 def parse_fanfou_date(date_str):
@@ -64,6 +66,8 @@ def parse_fanfou_date(date_str):
 def normalize_fanfou_date(date_str):
     return normalize_datetime(parse_fanfou_date(date_str))
 
+def get_only_fanfou_date(date_str):
+    return normalize_only_date(parse_fanfou_date(date_str))
 
 def parse_normalize_date(date_str):
     return datetime.strptime(date_str, ISO_DATE_FORMAT)
@@ -72,6 +76,8 @@ def parse_normalize_date(date_str):
 def normalize_datetime(dt):
     return dt.strftime(ISO_DATE_FORMAT)
 
+def normalize_only_date(dt):
+    return dt.strftime(ONLY_DATE_FORMAT)
 
 def normalize_timestamp(ts):
     return normalize_datetime(datetime.fromtimestamp(ts))
@@ -151,4 +157,3 @@ if __name__ == '__main__':
     print(dt2)
     print(normalize_datetime(datetime.now()))
     print(pretty_date(fd1))
-

@@ -53,6 +53,7 @@ STATUS_TABLE_CREATE_SQL = (
     ' sid TEXT, '
     ' uid TEXT,'
     ' text TEXT, '
+    ' photo INTEGER, '
     ' created_at TEXT, '
     ' added_at TEXT, '
     ' data TEXT, '
@@ -144,8 +145,8 @@ class DB(BaseDB):
         values = utils.convert_status(status)
         c = self.conn.cursor()
         c.execute(("INSERT OR REPLACE INTO status "
-                   " (id,sid,uid,text,created_at,added_at,data) "
-                   " VALUES (?,?,?,?,?,?,?) "), *values)
+                   " (id,sid,uid,text,photo, created_at,added_at,data) "
+                   " VALUES (?,?,?,?,?,?,?,?) "), *values)
         self.conn.commit()
         print "insert_status: %d rows inserted to database" % c.rowcount
         return c
@@ -154,8 +155,8 @@ class DB(BaseDB):
         values = [utils.convert_status(status) for status in status_list]
         c = self.conn.cursor()
         c.executemany(("INSERT OR REPLACE INTO status "
-                       " (id,sid,uid,text,created_at,added_at,data) "
-                       " VALUES (?,?,?,?,?,?,?) "), values)
+                       " (id,sid,uid,text,photo, created_at,added_at,data) "
+                       " VALUES (?,?,?,?,?,?,?,?) "), values)
         self.conn.commit()
         print "%d 条消息已存储到数据库" % c.rowcount
         return c

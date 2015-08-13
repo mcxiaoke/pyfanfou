@@ -274,16 +274,13 @@ def parse_args():
                         const=True, help='是否备份全部相册照片')
     parser.add_argument('-o', '--output',
                         help='备份数据存放目录，默认是当前目录下的output目录')
-    parser.add_argument('-v', '--view', action='store_false',
-                        help='仅显示命令行参数值，不执行操作')
+    # parser.add_argument('-v', '--view', action='store_false',
+    #                   help='仅显示命令行参数值，不执行操作')
     args = parser.parse_args()
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
     return args
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        sys.argv.append('-h')
-    options = vars(parse_args())
-    if options['view']:
-        print(options)
-    else:
-        Backup(**options).start()
+    Backup(**vars(parse_args())).start()

@@ -20,30 +20,29 @@ def _render_status(it, out, outDir):
     name = it['user']['screen_name']
     uid = it['user']['id']
     raw_time = it['created_at']
-    time = utils.pretty_fanfou_date(raw_time).decode('utf8')
+    time = utils.get_only_fanfou_date(raw_time).decode('utf8')
     text = it['text']
     if it.get('photo'):
-        photo_tpl = u'''<div class="st_photo"><a href="{0}" target="_blank">
-        <img src="{0}" height="48"></a></div>
-        '''
         imgfile = os.path.join('{0}-photos'.format(uid), '{0}.jpg'.format(id))
         if os.path.exists(os.path.join(outDir, imgfile)):
-            photo = photo_tpl.format(''+imgfile)
+            photo = imgfile
         else:
-            photo = photo_tpl.format(it['photo']['largeurl'])
+            photo = it['photo']['url']
+        print(photo)
     else:
         photo = ''
     tpl = Template(template.STATUS_TEMPLATE)
     status = tpl.substitute(id=id, name=name, uid=uid,
                             raw_time=raw_time, time=time,
-                            text=text, photo=photo)
+                            text=text, photo_url=photo,
+                            photo_link=u'照片' if photo else '')
     out.write(status.encode('utf8'))
 
 
 def _render(data, outDir):
     first = data[0]
     user = first['user']
-    title = u'{0}的饭否消息'.format(user['screen_name'])
+    title = u'{0}的消息'.format(user['screen_name'])
     out = StringIO()
     out.write(Template(template.HEAD).substitute(title=title).encode('utf8'))
     out.write(Template(template.BODY_HEADER).substitute(

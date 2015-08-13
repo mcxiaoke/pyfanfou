@@ -59,24 +59,22 @@ HEAD = u'''<!DOCTYPE html>
                 border-bottom:1px dashed #e0e0e0;
             }
             .status_box:hover { 
-                background-color: #f4f4f4; 
+                background-color: #f6f6f6; 
             }
-            .status{
+            .status {
                  margin:0px auto;
                  padding: 20px;
                  width:540px;
-                 //height:100%;
-                 //overflow: auto
+                 line-height:130%;
             }
             .st_text{
                 color:#4B585D;
             }
             .st_photo{
-                margin-top:8px;
-                //float: right;
-            }
-            .st_photo img {
-                //display: block
+                text-decoration: none;
+                color: #3F9ECD;
+                font-size:90%;
+                margin-left:8px;
             }
             .st_meta{
                 font-size: 80%;
@@ -89,10 +87,17 @@ HEAD = u'''<!DOCTYPE html>
             .st_uid {
                 color: #999999;
             }
+            .st_time:hover { 
+                background-color:#3F9ECD;
+                color:#ffffff;
+            }
             .st_time{
+                margin-left:16px;
                 font-size: 70%;
-                margin-left: 8px;
                 color:#999999;
+                padding:2px;
+                text-decoration: none;
+                border-bottom:1px dashed #a0a0a0;
             }
         </style>
     </head>
@@ -118,12 +123,11 @@ STATUS_TEMPLATE = u'''
         <div class="st_meta">
             <span class="st_name">$name</span>
             <span class="st_uid">(@$uid)</span>
-            <span class="st_time" data-time="$raw_time">$time</span>
+            <a class="st_time" href="http://fanfou.com/statuses/$id" 
+            data-time="$raw_time" target="_blank">$time</a>
         </div>
-        <p class="st_text">$text</p>
-        $photo
+        <span class="st_text">$text</span>
+        <a class="st_photo" href="$photo_url" target="_blank">$photo_link</a>
     </div>
 </div>
 '''
-
-# <span class"st_photo"><a href="$photo">$photo</a></span>
