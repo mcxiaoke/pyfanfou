@@ -8,7 +8,6 @@ import time
 import pickle as store
 import json
 import requests
-import cStringIO
 
 ISO_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 ONLY_DATE_FORMAT = "%Y-%m-%d"

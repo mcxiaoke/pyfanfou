@@ -15,6 +15,8 @@ import os
 import json
 import logging
 import renderer
+from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool
 
 '''
 饭否数据处理脚本
@@ -124,7 +126,10 @@ class Backup(object):
         if self.include_photo:
             # check user photos
             print('开始备份用户{0}的相册照片...'.format(self.target_id))
-            self._fetch_photos()
+            start = time.time()
+            self._fetch_photos_multi()
+            elasped = time.time()-start
+            print('备份用户{0}的照片共耗时{1}秒'.format(self.target_id, elasped))
         if self.include_user:
             # check user followings
             print('开始备份用户{0}的好友资料...'.format(self.target_id))
@@ -192,6 +197,27 @@ class Backup(object):
                 print('正在下载照片 {0}'.format(img_name))
                 utils.download_and_save(url, filename)
 
+    def _fetch_photos_multi(self):
+        rows = self.db.get_photo_status()
+        if not rows:
+            print('{0}的相册里没有照片'.format(self.target_id))
+            return
+        photos = []
+        for row in rows:
+            photos.append(json.loads(row['data']))
+
+        count = len(photos)
+        print("正在下载第{0}-{1}张照片 ...".format(
+            self.photo_total, self.photo_total+count))
+        pool = ThreadPool(8)
+        try:
+            pool.map(self._download_photo, photos)
+            pool.close()
+            pool.join()
+            self.photo_total += count
+        except KeyboardInterrupt:
+            pool.terminate()
+
     def _fetch_photos(self):
         rows = self.db.get_photo_status()
         if not rows:
@@ -209,7 +235,7 @@ class Backup(object):
             self._download_photo(photo)
         self.photo_total += count
 
-    def _download_photos(self):
+    def _fetch_photos_old(self):
         photos = self.db.get_photo_status()
         print('photos', len(photos))
         tail_status = None
