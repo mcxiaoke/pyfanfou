@@ -4,3 +4,5 @@ dist
 *.pyc
 *.dat
 *.db
+*.pdf
+*.html
