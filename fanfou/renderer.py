@@ -54,18 +54,85 @@ def _render_html(data, outDir):
     return out.getvalue()
 
 
-def render_html(data, fileOut):
-    inData = data
+def _render_status_makrdown(it, out):
+    id = it['id']
+    name = it['user']['screen_name']
+    uid = it['user']['id']
+    raw_time = it['created_at']
+    time = utils.normalize_fanfou_date(raw_time).decode('utf8')
+    text = it['text']
+    photo = u' [图片] ' if it.get('photo') else u''
+    tpl = Template(template.MARKDOWN_STATUS)
+    status = tpl.substitute(id=id, name=name, uid=uid,
+                            time=time, text=text, photo=photo)
+    out.write(status.encode('utf8'))
+
+
+def _render_markdown(data):
+    first = data[0]
+    user = first['user']
+    title = u'{0}的消息'.format(user['screen_name'])
+    out = StringIO()
+    out.write(Template(template.MARKDOWN_HEADER).substitute(
+        title=title).encode('utf8'))
+    for it in data:
+        _render_status_makrdown(it, out)
+
+    out.write(template.MARKDOWN_FOOTER)
+    return out.getvalue()
+
+
+def _render_status_text(it, out):
+    id = it['id']
+    name = it['user']['screen_name']
+    uid = it['user']['id']
+    raw_time = it['created_at']
+    time = utils.get_only_fanfou_date(raw_time).decode('utf8')
+    text = it['text']
+    tpl = Template(template.TEXT_STATUS)
+    status = tpl.substitute(id=id, name=name, uid=uid, time=time, text=text)
+    out.write(status.encode('utf8'))
+
+
+def _render_text(data):
+    first = data[0]
+    user = first['user']
+    title = u'{0}的消息'.format(user['screen_name'])
+    out = StringIO()
+    out.write(Template(template.TEXT_HEADER).substitute(
+        title=title).encode('utf8'))
+    for it in data:
+        _render_status_text(it, out)
+
+    out.write(template.TEXT_FOOTER)
+    return out.getvalue()
+
+
+def render(data, fileOut):
+    output = os.path.dirname(fileOut)
     # inData = json.load(open(fileIn, 'r'))
-    outData = _render_html(inData, os.path.dirname(fileOut))
+    html = _render_html(data, output)
+    markdown = _render_markdown(data)
+    text = _render_text(data)
     # http://stackoverflow.com/questions/6048085/python-write-unicode-text-to-a-text-file
+    # save  html
     tempfile = os.path.join(unicode(time.time()))
     with open(tempfile, 'w') as out:
-        out.write(outData)
-    shutil.move(tempfile, fileOut)
+        out.write(html)
+    shutil.move(tempfile, fileOut+'.html')
+    # save markdown
+    tempfile = os.path.join(unicode(time.time()))
+    with open(tempfile, 'w') as out:
+        out.write(markdown)
+    shutil.move(tempfile, fileOut+'.md')
+    # save text
+    tempfile = os.path.join(unicode(time.time()))
+    with open(tempfile, 'w') as out:
+        out.write(text)
+    shutil.move(tempfile, fileOut+'.txt')
 
 
 if __name__ == '__main__':
     # json.load(open('data/timeline.json','r'))
     render(json.load(open('../data/timeline.json', 'r')),
-           '../data/timeline.html')
+           '../data/timeline')

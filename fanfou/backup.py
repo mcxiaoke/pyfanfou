@@ -158,10 +158,10 @@ class Backup(object):
             for dt in db_data:
                 data.append(json.loads(dt['data']))
             fileOut = os.path.join(
-                self.output, '{0}.html'.format(self.target_id))
-            print('开始导出{0}的消息列表为HTML文件...'.format(self.target_id))
-            renderer.render_html(data, fileOut)
-            print('HTML文件', fileOut)
+                self.output, self.target_id)
+            print('开始导出{0}的消息列表为Html/Markdown/Txt...'.format(self.target_id))
+            renderer.render(data, fileOut)
+            print('已导出文件', fileOut+'.html|.md|.txt')
 
     def _fetch_followings(self):
         '''全量更新，获取全部好友数据'''
