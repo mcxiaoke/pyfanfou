@@ -15,6 +15,7 @@ import os
 import json
 import logging
 import renderer
+from requests import ConnectionError
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
 
@@ -38,6 +39,7 @@ class Backup(object):
         备份指定用户的饭否消息数据
         '''
         logger.info('Backup.init()', options)
+
         self._parse_options(**options)
         self.api = ApiClient(False)
         self.token = utils.load_account_info(self.username)
@@ -260,31 +262,59 @@ class Backup(object):
     def _fetch_newer_statuses(self):
         '''增量更新，获取比某一条新的数据（新发布的）'''
         head_status = self.db.get_latest_status()
-        if head_status:
-            while(not self.cancelled):
-                head_status = self.db.get_latest_status()
-                since_id = head_status['sid'] if head_status else None
-                timeline = self.api.get_user_timeline(
-                    self.target_id, count=DEFAULT_COUNT, since_id=since_id)
-                if not timeline:
-                    break
-                count = len(timeline)
-                print("正在保存第{0}-{1}条消息，共{2}条 ...".format(
-                    self.total, self.total+count,
-                    self.target_user['statuses_count']))
-                self.db.bulk_insert_status(timeline)
-                self.total += count
-                time.sleep(1)
-                if len(timeline) < DEFAULT_COUNT:
-                    break
+        if not head_status:
+            return
+        while(not self.cancelled):
+            head_status = self.db.get_latest_status()
+            since_id = head_status['sid'] if head_status else None
+            error = None
+            retry = 0
+            while retry < 3:
+                try:
+                    timeline = self.api.get_user_timeline(
+                        self.target_id, count=DEFAULT_COUNT,
+                        since_id=since_id)
+                except ConnectionError, e:
+                    error = e
+                    print(e)
+                    timeline = None
+                    print('网络连接超时，即将尝试第{0}重试...'.format(retry+1))
+                    time.sleep(retry*5)
+                    retry += 1
+            if error:
+                raise error
+            if not timeline:
+                break
+            count = len(timeline)
+            print("正在保存第{0}-{1}条消息，共{2}条 ...".format(
+                self.total, self.total+count,
+                self.target_user['statuses_count']))
+            self.db.bulk_insert_status(timeline)
+            self.total += count
+            time.sleep(1)
+            if len(timeline) < DEFAULT_COUNT:
+                break
 
     def _fetch_older_statuses(self):
         '''增量更新，获取比某一条旧的数据'''
         while not self.cancelled:
             tail_status = self.db.get_oldest_status()
             max_id = tail_status['sid'] if tail_status else None
-            timeline = self.api.get_user_timeline(
-                self.target_id, count=DEFAULT_COUNT, max_id=max_id)
+            error = None
+            retry = 0
+            while retry < 3:
+                try:
+                    timeline = self.api.get_user_timeline(
+                        self.target_id, count=DEFAULT_COUNT, max_id=max_id)
+                except ConnectionError, e:
+                    error = e
+                    print(e)
+                    timeline = None
+                    print('网络连接超时，即将尝试第{0}重试...'.format(retry+1))
+                    time.sleep(retry*5)
+                    retry += 1
+            if error:
+                raise error
             if not timeline:
                 break
             count = len(timeline)

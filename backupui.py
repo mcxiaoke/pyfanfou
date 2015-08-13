@@ -58,8 +58,9 @@ class BackupUI(Frame):
         self.dataQueue = queue.Queue()
         self.thread = None
         self.outputPath = StringVar()
-        self.userVar = IntVar(0)
-        self.photoVar = IntVar(1)
+        self.userVar = IntVar()
+        self.photoVar = IntVar()
+        self.photoVar.set(1)
 
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
@@ -174,8 +175,8 @@ class BackupUI(Frame):
             return
         options = dict(zip(keys, values))
         options['output'] = self.savePath.get()
-        options['include-user'] = self.userVar.get()
-        options['include-photo'] = self.photoVar.get()
+        options['include_user'] = self.userVar.get()
+        options['include_photo'] = self.photoVar.get()
         print('启动参数：', options)
         self.text.config(state=NORMAL)
         self.text.delete('0.0', END)
