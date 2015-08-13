@@ -53,7 +53,7 @@ def convert_status(status):
     text = status['text']
     created_at = normalize_fanfou_date(status["created_at"])
     added_at = get_now_datetime_str()
-    data = json.dumps(user)
+    data = json.dumps(status)
     return (id, sid, uid, text, created_at, added_at, data)
 
 

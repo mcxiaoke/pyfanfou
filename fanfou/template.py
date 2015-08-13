@@ -15,8 +15,11 @@ HEAD = u'''<!DOCTYPE html>
                 padding: 0;
                 margin: 0;
             }
-            body{
+            body {
                 background-color:#2183B4;
+            }
+            a img {
+                border:none;
             }
             .header{
                margin:0px auto;
@@ -44,24 +47,40 @@ HEAD = u'''<!DOCTYPE html>
                 text-decoration: none;
                 color:#ffffff;
             }
-            .timeline{
+            .timeline2{
                  margin:0px auto;
                  width:640px;
                  background-color: #ffffff;
             }
+            .status_box{
+                margin:0px auto;
+                width:660px;
+                background-color: #ffffff;
+                border-bottom:1px dashed #e0e0e0;
+            }
+            .status_box:hover { 
+                background-color: #f4f4f4; 
+            }
             .status{
                  margin:0px auto;
-                 padding: 16px;
+                 padding: 20px;
                  width:540px;
-                 height:100%;
-                 border-bottom:1px dashed #e0e0e0;
+                 //height:100%;
+                 //overflow: auto
             }
             .st_text{
                 color:#4B585D;
             }
+            .st_photo{
+                margin-top:8px;
+                //float: right;
+            }
+            .st_photo img {
+                //display: block
+            }
             .st_meta{
                 font-size: 80%;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
             }
             .st_name {
                 color: #3F9ECD;
@@ -94,12 +113,17 @@ BODY_FOOTER = u'''
 '''
 
 STATUS_TEMPLATE = u'''
-<div class="status" id="st_$id">
-    <div class="st_meta">
-        <span class="st_name">$name</span>
-        <span class="st_uid">(@$uid)</span>
-        <span class="st_time" data-time="$raw_time">$time</span>
+<div class="status_box">
+    <div class="status" id="st_$id">
+        <div class="st_meta">
+            <span class="st_name">$name</span>
+            <span class="st_uid">(@$uid)</span>
+            <span class="st_time" data-time="$raw_time">$time</span>
+        </div>
+        <p class="st_text">$text</p>
+        $photo
     </div>
-    <span class="st_text">$text</span>
 </div>
 '''
+
+# <span class"st_photo"><a href="$photo">$photo</a></span>

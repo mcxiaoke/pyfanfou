@@ -4,6 +4,7 @@
 # @Date:   2015-08-06 07:23:50
 from __future__ import print_function
 import sys
+import os
 import argparse
 import utils
 import time
@@ -11,7 +12,9 @@ from api import ApiClient
 from api import ApiError
 from db import DB
 import os
+import json
 import logging
+import renderer
 
 '''
 饭否数据处理脚本
@@ -32,6 +35,7 @@ class Backup(object):
         '''
         备份指定用户的饭否消息数据
         '''
+        logger.info('Backup.init()', options)
         self._parse_options(**options)
         self.api = ApiClient(False)
         self.token = utils.load_account_info(self.username)
@@ -49,16 +53,17 @@ class Backup(object):
         password - 用户密码（可选）
         output - 数据保存目录
         target - 目标用户ID
-        user_flag - 是否备份好友资料
-        photo_flag - 是否备份相册照片
+        include_user - 是否备份好友资料
+        include_photo - 是否备份相册照片
         '''
         self.username = options.get('username')
         self.password = options.get('password')
         self.auth_mode = self.username and self.password
         self.target = options.get('target')
-        self.output = options.get('output') or 'output'
-        self.include_user = options.get('include-user') or 0
-        self.include_photo = options.get('include-photo') or 0
+        self.output = os.path.abspath(
+            options.get('output') or os.path.join('output'))
+        self.include_user = options.get('include_user')
+        self.include_photo = options.get('include_photo')
 
     def _precheck(self):
         if self.token:
@@ -124,6 +129,7 @@ class Backup(object):
             # check user followings
             print('开始备份用户{0}的好友资料...'.format(self.target_id))
             self._fetch_followings()
+        self._render_statuses()
         self._report()
         if self.cancelled:
             print('本次备份已终止')
@@ -138,6 +144,19 @@ class Backup(object):
             self.photo_total, self.target_id))
         print('本次共备份了{1}的{0}个好友'.format(
             self.user_total, self.target_id))
+
+    def _render_statuses(self):
+        db_data = self.db.get_all_status()
+        if db_data:
+            data = []
+            print('开始读取{0}的消息列表数据...'.format(self.target_id))
+            for dt in db_data:
+                data.append(json.loads(dt['data']))
+            fileOut = os.path.join(
+                self.output, '{0}.html'.format(self.target_id))
+            print('开始导出{0}的消息列表为HTML文件...'.format(self.target_id))
+            renderer.render(data, fileOut)
+            print('HTML文件', fileOut)
 
     def _fetch_followings(self):
         '''全量更新，获取全部好友数据'''
@@ -249,16 +268,22 @@ def parse_args():
                         help='你的饭否密码')
     parser.add_argument('-t', '--target',
                         help='要备份的用户ID，默认是登录帐号')
-    parser.add_argument('-s', '--include-user', action='store_const', const=0,
-                        help='是否备份好友资料列表')
-    parser.add_argument('-i', '--include-photo', action='store_const', const=0,
-                        help='是否备份全部相册照片')
+    parser.add_argument('-s', '--include-user', action='store_const',
+                        const=False, help='是否备份好友资料列表')
+    parser.add_argument('-i', '--include-photo', action='store_const',
+                        const=True, help='是否备份全部相册照片')
     parser.add_argument('-o', '--output',
                         help='备份数据存放目录，默认是当前目录下的output目录')
+    parser.add_argument('-v', '--view', action='store_false',
+                        help='仅显示命令行参数值，不执行操作')
     args = parser.parse_args()
     return args
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         sys.argv.append('-h')
-    Backup(**vars(parse_args())).start()
+    options = vars(parse_args())
+    if options['view']:
+        print(options)
+    else:
+        Backup(**options).start()

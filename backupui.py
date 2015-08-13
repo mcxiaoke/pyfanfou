@@ -59,7 +59,7 @@ class BackupUI(Frame):
         self.thread = None
         self.outputPath = StringVar()
         self.userVar = IntVar(0)
-        self.photoVar = IntVar(0)
+        self.photoVar = IntVar(1)
 
         self.top = Frame(self)
         self.top.pack(side=TOP, expand=YES, fill=X)
