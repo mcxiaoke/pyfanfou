@@ -1,27 +1,20 @@
 ## 饭否数据备份工具
 
-备份指定用户的全部饭否消息，可选备份用户的相册照片和好友资料列表，存储为SQLite3数据库文件，后续将支持导出为HTML/Markdown/PDF
+备份指定用户的全部饭否消息和相册照片，可选备份好友资料列表，备份数据格式为SQLite/HTML/Markdown/TXT四种
 
 ### 安装和使用
 
 #### Windows
 
-在这里下载 [饭否备份工具](https://github.com/mcxiaoke/pyfanfou/releases/latest)，解压，运行目录中的 **pyfanfou.exe** 即可。
+下载 [饭否备份工具](https://github.com/mcxiaoke/pyfanfou/releases/latest)，解压，运行 **pyfanfou.exe** 即可。
 
-### OS X和Linux
-
-使用pip安装：
+### 所有系统
 
 ```
+// pip安装
 pip install pyfanfou
-```
-
-然后终端里：
-
-```
 // 使用命令行
 fanfoubackup
-
 // 打开GUI界面
 fanfoubackupui
 
