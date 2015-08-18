@@ -1,12 +1,12 @@
 ## 饭否数据备份工具
 
-备份指定用户的全部饭否消息和相册照片，可选备份好友资料列表，备份数据格式为SQLite/HTML/Markdown/TXT四种
+备份指定用户的全部饭否消息和相册照片，可选备份好友资料列表，备份数据格式为SQLite/Html/Markdown/Txt四种，推荐保存Html格式
 
 ### 安装和使用
 
 #### Windows
 
-下载 [饭否备份工具](https://github.com/mcxiaoke/pyfanfou/releases/latest)，解压，运行 **pyfanfou.exe** 即可。
+从[百度云](http://pan.baidu.com/s/1o6GcH9S#path=%252FPublic2)或[Github](https://github.com/mcxiaoke/pyfanfou/releases/latest)下载，解压运行 **pyfanfou.exe** 即可。
 
 ### 所有系统
 
