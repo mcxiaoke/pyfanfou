@@ -9,11 +9,8 @@ import api
 import config
 import db
 import backup
+import backupcmd
+import backupui
 
 if __name__ == '__main__':
-    print(xauth)
-    print(basedb)
-    print(api)
-    print(config)
-    print(db)
-    print(backup)
+    pass

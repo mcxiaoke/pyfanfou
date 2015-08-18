@@ -18,11 +18,11 @@ setup(
     description=const.APP_NAME,
     long_description=readme_file,
     classifiers=(
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Intended Audience :: End Users/Desktop",
-        "License :: OSI Approved :: Apache License",
+        "License :: OSI Approved :: Apache License 2",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
@@ -31,4 +31,5 @@ setup(
         #"Programming Language :: Python :: 3.4",
         "Topic :: Utilities",
     ),
+    install_requires=['requests','oauth2','requests-oauthlib'],
 )

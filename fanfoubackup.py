@@ -6,8 +6,8 @@
 Run fanfou statuses backup.
 '''
 import sys
-import backupcmd
-import backupui
+from fanfou import backupcmd
+from fanfou import backupui
 
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == '-gui':
