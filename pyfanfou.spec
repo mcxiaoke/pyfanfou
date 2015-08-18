@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-a = Analysis(['backupui.py'],
+a = Analysis(['pyfanfou.py'],
              pathex=['D:\\mcxiaoke\\pyfanfou'],
              hiddenimports=[],
              hookspath=None,
@@ -11,12 +11,12 @@ exe = EXE(pyz,
           name='pyfanfou.exe',
           debug=False,
           strip=None,
-          upx=False,
-          console=False , icon='icon.ico')
+          upx=True,
+          console=False )
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
                strip=None,
-               upx=False,
-               name=u'pyfanfou')
+               upx=True,
+               name='pyfanfou')
