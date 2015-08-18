@@ -344,9 +344,9 @@ def parse_args():
     parser.add_argument('-t', '--target',
                         help='要备份的用户ID，默认是登录帐号')
     parser.add_argument('-s', '--include-user', action='store_const',
-                        const=False, help='是否备份好友资料列表')
+                        const=False, help='是否备份好友资料列表，默认否')
     parser.add_argument('-i', '--include-photo', action='store_const',
-                        const=True, help='是否备份全部相册照片')
+                        const=True, help='是否备份全部相册照片，默认是')
     parser.add_argument('-o', '--output',
                         help='备份数据存放目录，默认是当前目录下的output目录')
     # parser.add_argument('-v', '--view', action='store_false',

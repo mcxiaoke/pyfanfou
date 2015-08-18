@@ -16,8 +16,8 @@ from tkFileDialog import askdirectory
 from tkSimpleDialog import *
 from tkMessageBox import showerror, showinfo
 from ScrolledText import ScrolledText
-from fanfou import const
-from fanfou import backup
+import const
+import backup
 
 # http://pythonhosted.org/PyInstaller/
 

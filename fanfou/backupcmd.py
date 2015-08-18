@@ -3,8 +3,8 @@
 # @Author: mcxiaoke
 # @Date:   2015-08-12 09:03:09
 
-from fanfou.backup import Backup
-from fanfou.backup import parse_args
+from backup import Backup
+from backup import parse_args
 
 
 def start():

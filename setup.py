@@ -11,7 +11,14 @@ setup(
     author="Xiaoke Zhang",
     author_email="mail@mcxiaoke.com",
     packages=find_packages(),
-    scripts=["fanfoubackup.py"],
+    entry_points={
+        'console_scripts': [
+            'fanfoubackup=fanfou.backupcmd:start',
+        ],
+        'gui_scripts': [
+            'fanfoubackupui = fanfou.backupui:start',
+        ]
+    },
     url="https://github.com/mcxiaoke/pyfanfou",
     license="Apache License 2.0",
     keywords="fanfou.com, fanfou, backup, Tkinter",
@@ -31,5 +38,5 @@ setup(
         #"Programming Language :: Python :: 3.4",
         "Topic :: Utilities",
     ),
-    install_requires=['requests','oauth2','requests-oauthlib'],
+    install_requires=['requests', 'oauth2', 'requests-oauthlib'],
 )
