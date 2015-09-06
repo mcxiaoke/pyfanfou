@@ -274,6 +274,7 @@ class Backup(object):
                     timeline = self.api.get_user_timeline(
                         self.target_id, count=DEFAULT_COUNT,
                         since_id=since_id)
+                    break
                 except ConnectionError, e:
                     error = e
                     print(e)
@@ -306,6 +307,7 @@ class Backup(object):
                 try:
                     timeline = self.api.get_user_timeline(
                         self.target_id, count=DEFAULT_COUNT, max_id=max_id)
+                    break
                 except ConnectionError, e:
                     error = e
                     print(e)
