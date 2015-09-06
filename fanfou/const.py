@@ -3,7 +3,7 @@
 # @Author: mcxiaoke
 # @Date:   2015-08-11 21:02:43
 APP_NAME = '饭否数据备份工具'
-APP_VERSION = '1.0.0'
+APP_VERSION = '1.0.1'
 
 AUTH_DESCRIPTION = u'''
 说明：备份公开用户的数据不需要帐号和密码，此时请指定目标用户的ID。备份私密用户的数据需要有权限，如果是你自己的数据，需要登录，如果是别人的数据，需要是你关注的人，否则无法读取消息数据。
@@ -31,7 +31,7 @@ USER_GUIDE = '''
 
 备份输出的数据格式为SQLite数据库文件，HTML格式+TXT格式+Markdown格式
 
-======== 饭否数据备份工具 v1.0.0 ========
+======== 饭否数据备份工具 v1.0.1 ========
 
 命令行使用：
 fanfoubackup.py [-h] [-u USERNAME] [-p PASSWORD] [-t TARGET] [-s] [-i]
