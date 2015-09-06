@@ -190,7 +190,7 @@ class Backup(object):
             img_dir = os.path.join(
                 self.output, '{0}-photos'.format(self.target_id))
             if not os.path.exists(img_dir):
-                os.makedirs(img_dir)
+                os.mkdir(img_dir)
             img_name = '{0}.{1}'.format(status_id, url[-3:] or 'jpg')
             filename = os.path.join(img_dir, img_name)
             if os.path.exists(filename):
